@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Havanna/Havanna.csproj" />
+    <Project Path="src/HexLib/HexLib.csproj" />
+    <Project Path="src/Gamewright/Gamewright.csproj" />
+    <Project Path="src/Amazons/Amazons.csproj" />
+    <Project Path="src/Chess/Chess.csproj" />
+    <Project Path="src/CodeGen/CodeGen.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeGen.tests/CodeGen.tests.csproj" />
+    <Project Path="tests/Gamewright.tests/Gamewright.tests.csproj" />
+    <Project Path="tests/HexLib.tests/HexLib.tests.csproj" />
+  </Folder>
+</Solution>

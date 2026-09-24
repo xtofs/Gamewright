@@ -1,0 +1,79 @@
+# Gamewright
+
+A general-purpose 2D rendering library for .NET, built on OpenGL via Silk.NET.
+Designed for interactive 2D applications — board games, simulations, and custom
+2D engines — with a composable layout system, GPU-accelerated drawing, and a
+clean public API that stays free of windowing-library types.
+
+## Quick start
+
+```csharp
+using Gamewright;
+
+Font font = default!;
+
+using var window = new Window("My App");
+
+window.Load   += device => { font = device.LoadFont("/path/to/font.ttf", 48); };
+window.Render += (canvas, dt) =>
+{
+    canvas.DrawRectangle(new Rect(100, 100, 200, 200), Colors.SteelBlue);
+    canvas.DrawText(font, "Hello", new Vector2(110, 110), Colors.White);
+};
+window.Unload += () => { font?.Dispose(); };
+
+window.Run();
+```
+
+`Load` receives a `GraphicsDevice` for creating fonts and textures.
+`Render` receives a `Canvas` for drawing. `Window` owns the OpenGL
+context, render loop, input, and resource lifetime.
+
+## Features
+
+- **Canvas** — GPU-accelerated drawing of rectangles, rounded rectangles,
+  circles, lines, polylines, sprites, and text; all batched per frame.
+- **Layout tree** — composable tree of rectangles (`Node`, `Grid`) that maps a
+  framebuffer size down to individual cells. Supports proportional and absolute
+  `GridLength`, ColSpan/RowSpan, aspect-ratio canvases, and insets.
+  Hit-testing walks the tree automatically.
+- **Font** — TrueType font rasterisation (stb_truetype) with a dynamic atlas
+  that pre-fills Latin-1 and rasterises additional glyphs on first use.
+  Layout is cached per `(text, scale)` pair.
+- **Texture atlas** — typed `TextureAtlas<TKey>` for sprite sheets.
+- **Window** — wraps Silk.NET windowing; exposes C# events (`Load`, `Render`,
+  `Unload`, `Resize`, `KeyDown`, `MouseDown`), `FrameTime` for smooth FPS
+  display, and a min-size resize clamp.
+
+## Structure
+
+```
+src/
+  Gamewright/        # library
+  Chess/          # chess board demo
+  Amazons/        # Game of Amazons demo
+  CodeGen/        # GLSL → C# shader-binding generator
+tests/
+  Gamewright.Tests/
+  CodeGen.Tests/
+```
+
+## Dependencies
+
+| Package                             | Purpose                         |
+| ----------------------------------- | ------------------------------- |
+| Silk.NET.OpenGL                     | OpenGL bindings                 |
+| Silk.NET.Windowing                  | Windowing (wrapped by `Window`) |
+| Silk.NET.Input                      | Mouse/keyboard input            |
+| StbTrueTypeSharp                    | TrueType font rasterisation     |
+| StbImageSharp                       | PNG/JPEG texture loading        |
+| Microsoft.Extensions.Caching.Memory | Text layout cache               |
+
+## Requirements
+
+- .NET 10
+- A platform supported by Silk.NET (Windows, macOS, Linux)
+
+## License
+
+MIT
