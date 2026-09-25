@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 /// </summary>
 public partial class HexGrid<T> where T : ICellContent
 {
-    private readonly Cell[] _board;
+    private readonly Cell[] _cells;
     readonly ushort[] _edgeMask;
     readonly ushort[] _cornerMask;
 
@@ -23,7 +23,7 @@ public partial class HexGrid<T> where T : ICellContent
         Radius = radius;
         Count = CubeMath.NumberOfHexagonsInGrid(radius);
 
-        _board = new Cell[Count];
+        _cells = new Cell[Count];
         _edgeMask = new ushort[Count];
         _cornerMask = new ushort[Count];
 
@@ -42,23 +42,35 @@ public partial class HexGrid<T> where T : ICellContent
                 _edgeMask[index] |= (ushort)(1 << bitIndex);
             }
 
+            // initialize the cell at this index. 
+            // Might be redundant since the default already sets Occupance to false and Content to default(T)
+            _cells[index] = new Cell();
+            var cell = _cells[index];
+
             // neighbor slots are indexed by HexDirection, -1 marks a neighbor outside the grid
-            ref var neighbors = ref _board[index].Neighbors;
+            ref var neighbors = ref _cells[index].Neighbors;
             foreach (var direction in Enum.GetValues<HexDirection>())
             {
                 var neighbor = cube.Neighbor(direction);
-                neighbors[(int)direction] = neighbor.IsWithin(radius) ? neighbor.GetIndex() : -1;
+                if (neighbor.IsWithin(radius)) { neighbors.Add((short)neighbor.GetIndex()); }
             }
         }
     }
 
 
+    /// <summary>
+    /// Represents a single cell within the hexagonal grid. Contains occupancy status, content, and neighbor information.
+    /// Cell's default state is unoccupied with no content.
+    /// </summary>
     public struct Cell
     {
-        public T State;
-        public NeighborArray Neighbors;
+        public bool IsOccupied { get; set; }
 
-        public override readonly string ToString() => $"Cell(State={State.Symbol})";
+        public T Content;
+
+        public NeighborSet Neighbors;
+
+        public override readonly string ToString() => $"{{Cell {(IsOccupied ? $"{Content}" : "Empty")}, Neighbors {Neighbors} }}";
     }
 
     public string Format()
@@ -124,20 +136,21 @@ public partial class HexGrid<T> where T : ICellContent
         }
     }
 
-    public void PlaceStone(CubeCoord cube, T player)
+    public void PlacePiece(CubeCoord cube, T piece)
     {
         var index = cube.GetIndex();
-        PlaceStone(index, player);
+        PlaceStone(index, piece);
     }
 
     internal void PlaceStone(int idx, T content)
     {
-        ref var cell = ref _board[idx];
-        cell.State = content;
+        ref var cell = ref _cells[idx];
+        cell.IsOccupied = true;
+        cell.Content = content;
     }
 
     /// <summary>Grid-geometry data for callers composing region/connectivity tracking on top of the grid.</summary>
-    public ReadOnlySpan<int> Neighbors(int index) => _board[index].Neighbors;
+    public ReadOnlySpan<short> Neighbors(int index) => _cells[index].Neighbors;
 
     public ushort EdgeMask(int index) => _edgeMask[index];
 
@@ -160,22 +173,47 @@ public partial class HexGrid<T> where T : ICellContent
 
     public bool TryGetContent(CubeCoord cube, [MaybeNullWhen(false)] out T content)
     {
-        if (!Contains(cube))
-        {
-            content = default;
-            return false;
-        }
-
         var index = cube.GetIndex();
-        if (index >= _board.Length || index < 0)
+        if (index >= _cells.Length || index < 0)
         {
             content = default;
             return false;
         }
+        if (_cells[index].IsOccupied)
+        {
+            content = _cells[index].Content;
+            return true;
+        }
+        content = default;
+        return false;
+    }
 
-        content = _board[index].State;
-        return true;
+    public bool IsCorner(CubeCoord hex, [MaybeNullWhen(false)] out GridCornerDirection dir)
+    {
+        var ix = hex.GetIndex();
+        dir = default!;
+        return _cornerMask[ix] != 0;
+    }
+
+    public bool IsEdge(CubeCoord hex, [MaybeNullWhen(false)] out GridEdgeDirection dir)
+    {
+        var ix = hex.GetIndex();
+        dir = default!;
+        return _edgeMask[ix] != 0;
+    }
+
+    public GridLocationKind GetKind(CubeCoord hex)
+    {
+        var ix = hex.GetIndex();
+        var (c, e) = (_cornerMask[ix], _edgeMask[ix]);
+        var kind = (c, e) switch
+        {
+            (0, 0) => GridLocationKind.Inner,
+            (_, 0) => GridLocationKind.Corner,
+            (0, _) => GridLocationKind.Edge,
+            _ => throw new InvalidOperationException("Unexpected corner/edge mask combination")
+        };
+        return kind;
     }
 }
-
 

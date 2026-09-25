@@ -6,7 +6,7 @@ namespace Gamewright.HexBoard;
 /// for naming the direction the edge is facing, even though they are 
 /// not exactly in the 45-degree increments cardinal directions indicate.
 /// </summary>
-public enum EdgeDirection
+public enum GridEdgeDirection
 {
     North = 0,
     NorthEast = 1,

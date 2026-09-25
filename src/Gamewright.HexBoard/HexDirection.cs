@@ -4,9 +4,9 @@ namespace Gamewright.HexBoard;
 /// The six directions from a pointy-top hexagon to its neighbors.
 /// </summary>
 /// <remarks>
-/// The order matches <see cref="CornerDirection"/>: the corner of a grid with radius R
+/// The order matches <see cref="GridCornerDirection"/>: the corner of a grid with radius R
 /// in direction d is R * <see cref="CubeCoord.Offset(HexDirection)"/>.
-/// Unlike <see cref="EdgeDirection"/>, which names the edges of the board,
+/// Unlike <see cref="GridEdgeDirection"/>, which names the edges of the board,
 /// these name the directions between adjacent cells.
 /// </remarks>
 public enum HexDirection

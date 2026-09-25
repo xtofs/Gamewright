@@ -11,7 +11,7 @@ namespace Gamewright.HexBoard;
 /// no North and South corner on a grid with pointy-top hexagons.
 /// 
 /// </note>
-public enum CornerDirection
+public enum GridCornerDirection
 {
     NorthWest, NorthEast, East, SouthEast, SouthWest, West
 }

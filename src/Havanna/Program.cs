@@ -5,6 +5,7 @@ using Gamewright.HexBoard;
 using Silk.NET.Input;
 using Gamewright.Utilities;
 using System.Numerics;
+using System.Diagnostics.CodeAnalysis;
 
 public sealed class Program : IDisposable
 {
@@ -15,11 +16,16 @@ public sealed class Program : IDisposable
         program.Run();
     }
 
-    private readonly Window _window;
+    private const int N = 8;
 
+    private readonly Window _window;
+    private TextureAtlas<Piece> _textures = default!;
     private Font _font = default!;
 
-    private const int N = 5;
+    private readonly HexGrid<Piece> _board;
+
+    private Piece _currentPlayer = Piece.White;
+
     private readonly HexLayout _layout = new(N);
     private CubeCoord? _selectedHex;
 
@@ -32,23 +38,10 @@ public sealed class Program : IDisposable
         _window.KeyDown += OnKeyDown;
         _window.MouseDown += OnMouseDown;
 
-        // _board = SetupBoard();
-    }
+        _board = new HexGrid<Piece>(N);
 
-    // private static Occupancy[,] SetupBoard()
-    // {
-    //     var board = new Occupancy[8, 8];
-    //     var rng = new Random(0);
-    //     foreach (var (f, r) in Enumerable.Cartesian(8, 8))
-    //     {
-    //         if (rng.NextDouble() < 0.5)
-    //         {
-    //             var piece = rng.NextEnum<Piece>();
-    //             board[f, r] = piece.ToOccupancy();
-    //         }
-    //     }
-    //     return board;
-    // }
+        _board.PlacePiece(new CubeCoord(0, 0, 0), Piece.Black);
+    }
 
     private void OnKeyDown(Key key)
     {
@@ -66,7 +59,7 @@ public sealed class Program : IDisposable
 
     private void OnLoad(GraphicsDevice device)
     {
-        // _sprites = CreatePieceAtlas(device);
+        _textures = CreatePieceAtlas(device);
         _font = device.LoadFont(FontPath, 48);
     }
 
@@ -80,8 +73,18 @@ public sealed class Program : IDisposable
     {
         if (_layout.TryGetHex(pos, out var hex))
         {
-            _selectedHex = hex;
-            Console.WriteLine($"Selected hex: {hex.Q},{hex.R},{hex.S}");
+            // _selectedHex = hex;
+            // Console.WriteLine($"Selected hex: {hex.Q},{hex.R},{hex.S}");
+
+            if (!_board.TryGetContent(hex, out var content))
+            {
+                _board.PlacePiece(hex, _currentPlayer);
+                _currentPlayer = _currentPlayer.Opponent;
+            }
+        }
+        else
+        {
+            _selectedHex = null;
         }
     }
 
@@ -96,21 +99,31 @@ public sealed class Program : IDisposable
             var point = _layout.GetCenter(hex);
             var pts = _layout.GetHexagon(hex);
 
-            var fill = GetColor(hex);
+            var fill = GetFillColor(hex);
+            var strokeColor = GetStrokeColor(hex);
             var isSelected = _selectedHex == hex;
-            var stroke = isSelected ? new Stroke(Colors.HotPink, 9) : new Stroke(Colors.Yellow, 1);
+            var stroke = isSelected ? new Stroke(Colors.HotPink, 9) : new Stroke(strokeColor, 3); ;
+
             canvas.DrawPolygon(pts, fill: fill, stroke: stroke);
-
-            var sz = _layout.HexRadius / 2f;
-            var rect = new Rect(point.X - sz, point.Y - sz, 2 * sz, 2 * sz);
-            canvas.DrawCenteredText(_font, $"{hex.Q},{hex.R},{hex.S}", rect, sz / 60f, Colors.White);
         }
 
-        static int Mod(int a, int m)
+        foreach (var hex in _layout.GetGrid())
         {
-            int r = a % m;
-            return r < 0 ? r + m : r;
+            if (_board.TryGetContent(hex, out var piece))
+            {
+                // var point = _layout.GetCenter(hex);
+
+                // var r = _layout.HexRadius;
+                // var a = r * (3 - MathF.Sqrt(3));
+                // var a2 = a / 2f;
+
+                // var rect = new Rect(point.X - a2, point.Y - a2, a, a);
+                var rect = _layout.GetInscribedSquare(hex);
+                canvas.DrawSprite(_textures, piece, rect);
+                canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 2));
+            }
         }
+
         #endregion
 
         if (_selectedHex is { } selectedHex)
@@ -123,33 +136,51 @@ public sealed class Program : IDisposable
         canvas.DrawText(_font, $"{1f / _window.FrameTime:f0}",
             new System.Numerics.Vector2(scale * 0.01f, scale * 0.01f), Colors.Black);
 #endif
-        static Color GetColor(CubeCoord hex)
+        static Color GetFillColor(CubeCoord hex)
         {
-            return Mod(hex.Q - hex.R, 3) switch
+            return int.Mod(hex.Q - hex.R, 3) switch
             {
-                0 => Color.FromARGB(0xff404040),
-                1 => Color.FromARGB(0xff808080),
-                2 => Color.FromARGB(0xffB0B0B0),
+                0 => Color.FromARGB(0xffA0A0A0),
+                1 => Color.FromARGB(0xffC0C0C0),
+                2 => Color.FromARGB(0xffE0E0E0),
                 _ => throw new InvalidOperationException("Unexpected modulo result")
+            };
+        }
+
+        Color GetStrokeColor(CubeCoord hex)
+        {
+            return _board.GetKind(hex) switch
+            {
+                GridLocationKind.Corner => Colors.DarkBlue,
+                GridLocationKind.Edge => Colors.DarkSlateBlue,
+                _ => Colors.RoyalBlue,
             };
         }
     }
 
 
 
-    // private static TextureAtlas<Piece> CreatePieceAtlas(GraphicsDevice device)
-    // {
-    //     var path = Path.Combine(AppContext.BaseDirectory, "pieces_atlas.png");
-    //     if (!File.Exists(path))
-    //         throw new FileNotFoundException("The chess piece atlas was not found.", path);
-    //     var regions = Enum.GetValues<Piece>().ToDictionary(p => p, GetRegion);
-    //     return device.LoadAtlas(path, regions);
+    private static TextureAtlas<Piece> CreatePieceAtlas(GraphicsDevice device)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "pieces_atlas.png");
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException("The chess piece atlas was not found.", path);
+        }
 
-    //     static Rect GetRegion(Piece piece)
-    //     {
-    //         var (col, row) = (((int)piece & 0x7F) - 1, ((int)piece & 0x80) >> 7);
-    //         return new Rect(col * 250, row * 250, 250, 250);
-    //     }
-    // }
+        var regions = Piece.GetValues().ToDictionary(p => p, GetRegion);
+        return device.LoadAtlas(path, regions);
 
+        static Rect GetRegion(Piece piece)
+        {
+            var (col, row) = piece.Symbol switch
+            {
+                'X' => (1, 0),
+                'O' => (1, 1),
+                _ => throw new InvalidOperationException("Unexpected piece")
+            };
+
+            return new Rect(col * 250, row * 250, 250, 250);
+        }
+    }
 }

@@ -71,12 +71,12 @@ public sealed class Canvas : IDisposable
         _gl.Clear(ClearBufferMask.ColorBufferBit);
     }
 
-    public void DrawRectangle(Rect rectangle, Color color, Stroke? stroke = null)
+    public void DrawRectangle(Rect rectangle, Color? color = null, Stroke? stroke = null)
     {
         DrawRoundedRectangle(rectangle, default, color, stroke);
     }
 
-    public void DrawRoundedRectangle(Rect rectangle, CornerRadii radii, Color color, Stroke? stroke = null)
+    public void DrawRoundedRectangle(Rect rectangle, CornerRadii radii, Color? color = null, Stroke? stroke = null)
     {
         EnsureDrawing();
         ValidateRectangle(rectangle);
@@ -85,9 +85,10 @@ public sealed class Canvas : IDisposable
         {
             throw new ArgumentOutOfRangeException(nameof(stroke), "Stroke width cannot be negative.");
         }
+        var actualColor = color ??= default!;
 
         SwitchBatch(BatchKind.RoundedBox, null);
-        _roundedBoxes.Add(GeometryBuilder.CreateRoundedBox(rectangle, radii, color, actualStroke));
+        _roundedBoxes.Add(GeometryBuilder.CreateRoundedBox(rectangle, radii, actualColor, actualStroke));
     }
 
     public void DrawCircle(Vector2 center, float radius, Color color, Stroke? stroke = null)

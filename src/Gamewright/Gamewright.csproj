@@ -25,9 +25,13 @@
     <Compile Include="$(IntermediateOutputPath)Generated/ShaderBindings.g.cs" />
   </ItemGroup>
 
-  <Target Name="GenerateShaderBindings" BeforeTargets="CoreCompile">
+  <!-- 
+    the following causes a permanent error in VsCode's Problems tab 
+    please uncomment when shader on CodeGen change
+  -->
+  <!-- <Target Name="GenerateShaderBindings" BeforeTargets="CoreCompile">
     <MSBuild Projects="../CodeGen/CodeGen.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
     <Exec Command="dotnet &quot;../CodeGen/bin/$(Configuration)/net10.0/CodeGen.dll&quot; &quot;$(MSBuildProjectDirectory)/Shaders/shaders.json&quot; &quot;$(IntermediateOutputPath)Generated&quot;" />
-  </Target>
+  </Target> -->
 
 </Project>

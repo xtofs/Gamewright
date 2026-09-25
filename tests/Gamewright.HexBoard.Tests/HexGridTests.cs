@@ -38,7 +38,7 @@ public class HexDirectionTests
         var cube = Radius * CubeCoord.Offset(direction);
 
         Assert.True(cube.IsCorner(Radius, out var corner));
-        Assert.Equal((CornerDirection)direction, corner);
+        Assert.Equal((GridCornerDirection)direction, corner);
     }
 }
 
@@ -143,7 +143,7 @@ public class HexGridTests
         }
 
         var index = new CubeCoord(-1, 1 - Radius, Radius).GetIndex();
-        Assert.Equal(1 << (int)EdgeDirection.North, tracker.EdgeMask(index));
+        Assert.Equal(1 << (int)GridEdgeDirection.North, tracker.EdgeMask(index));
         Assert.Equal(0, tracker.CornerMask(index));
     }
 
@@ -157,9 +157,9 @@ public class HexGridTests
         Place(tracker, a, 'X');
         Place(tracker, b, 'O');
 
-        Assert.Equal(1 << (int)EdgeDirection.North, tracker.EdgeMask(a.GetIndex()));
+        Assert.Equal(1 << (int)GridEdgeDirection.North, tracker.EdgeMask(a.GetIndex()));
         Assert.Equal(0, tracker.CornerMask(a.GetIndex()));
-        Assert.Equal(1 << (int)CornerDirection.NorthEast, tracker.CornerMask(b.GetIndex()));
+        Assert.Equal(1 << (int)GridCornerDirection.NorthEast, tracker.CornerMask(b.GetIndex()));
         Assert.Equal(0, tracker.EdgeMask(b.GetIndex()));
     }
 

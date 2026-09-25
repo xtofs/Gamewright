@@ -104,7 +104,7 @@ public readonly record struct CubeCoord
     /// <param name="radius"></param>
     /// <param name="corner"></param>
     /// <returns></returns>
-    public bool IsCorner(int radius, [MaybeNullWhen(false)] out CornerDirection corner)
+    public bool IsCorner(int radius, [MaybeNullWhen(false)] out GridCornerDirection corner)
     {
         // corners are determined by which components have 
         // absolute value equal to the radius and their signs.
@@ -119,25 +119,25 @@ public readonly record struct CubeCoord
         switch (q, r, s)
         {
             case (-1, 0, 1):
-                corner = CornerDirection.NorthWest;
+                corner = GridCornerDirection.NorthWest;
                 return true;
             case (0, -1, 1):
-                corner = CornerDirection.NorthEast;
+                corner = GridCornerDirection.NorthEast;
                 return true;
             case (1, -1, 0):
-                corner = CornerDirection.East;
+                corner = GridCornerDirection.East;
                 return true;
             case (1, 0, -1):
-                corner = CornerDirection.SouthEast;
+                corner = GridCornerDirection.SouthEast;
                 return true;
             case (0, 1, -1):
-                corner = CornerDirection.SouthWest;
+                corner = GridCornerDirection.SouthWest;
                 return true;
             case (-1, 1, 0):
-                corner = CornerDirection.West;
+                corner = GridCornerDirection.West;
                 return true;
             default:
-                corner = (CornerDirection)(-1);
+                corner = (GridCornerDirection)(-1);
                 return false;
         }
     }
@@ -148,7 +148,7 @@ public readonly record struct CubeCoord
     /// <param name="radius"></param>
     /// <param name="edge"></param>
     /// <returns></returns>
-    internal bool IsEdge(int radius, [MaybeNullWhen(false)] out EdgeDirection edge)
+    internal bool IsEdge(int radius, [MaybeNullWhen(false)] out GridEdgeDirection edge)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(radius);
         // the edge is determined by the sign of the component that has 
@@ -160,25 +160,25 @@ public readonly record struct CubeCoord
         switch (q, r, s)
         {
             case (-1, 0, 0):
-                edge = EdgeDirection.NorthWest;
+                edge = GridEdgeDirection.NorthWest;
                 return true;
             case (1, 0, 0):
-                edge = EdgeDirection.SouthEast;
+                edge = GridEdgeDirection.SouthEast;
                 return true;
             case (0, -1, 0):
-                edge = EdgeDirection.NorthEast;
+                edge = GridEdgeDirection.NorthEast;
                 return true;
             case (0, 1, 0):
-                edge = EdgeDirection.SouthWest;
+                edge = GridEdgeDirection.SouthWest;
                 return true;
             case (0, 0, 1):
-                edge = EdgeDirection.North;
+                edge = GridEdgeDirection.North;
                 return true;
             case (0, 0, -1):
-                edge = EdgeDirection.South;
+                edge = GridEdgeDirection.South;
                 return true;
             default:
-                edge = (EdgeDirection)(-1);
+                edge = (GridEdgeDirection)(-1);
                 return false;
         }
     }
