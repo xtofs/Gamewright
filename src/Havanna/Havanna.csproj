@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Gamewright\Gamewright.csproj" />
+    <ProjectReference Include="..\Gamewright.HexBoard\Gamewright.HexBoard.csproj" />
   </ItemGroup>
 
   <ItemGroup>

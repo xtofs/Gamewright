@@ -1,7 +1,6 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 
 /// <summary>
@@ -9,7 +8,7 @@ using System.Runtime.CompilerServices;
 /// Each hexagon is at most <see cref="Radius"/> hexagons away from the center hexagon. 
 /// (0 is the degenerate case with just one hexagon)
 /// </summary>
-partial class HexGrid<T> where T : ICellContent
+public partial class HexGrid<T> where T : ICellContent
 {
     private readonly Cell[] _board;
     readonly ushort[] _edgeMask;
@@ -42,15 +41,17 @@ partial class HexGrid<T> where T : ICellContent
                 var bitIndex = (int)edge;
                 _edgeMask[index] |= (ushort)(1 << bitIndex);
             }
+
+            // neighbor slots are indexed by HexDirection, -1 marks a neighbor outside the grid
+            ref var neighbors = ref _board[index].Neighbors;
+            foreach (var direction in Enum.GetValues<HexDirection>())
+            {
+                var neighbor = cube.Neighbor(direction);
+                neighbors[(int)direction] = neighbor.IsWithin(radius) ? neighbor.GetIndex() : -1;
+            }
         }
     }
 
-
-    [InlineArray(6)]
-    public struct NeighborArray
-    {
-        private int _element0;
-    }
 
     public struct Cell
     {
@@ -155,10 +156,11 @@ partial class HexGrid<T> where T : ICellContent
     //     }
     // }
 
+    public bool Contains(CubeCoord cube) => cube.IsWithin(Radius);
+
     public bool TryGetContent(CubeCoord cube, [MaybeNullWhen(false)] out T content)
     {
-        var (q, r, s) = cube;
-        if (Math.Abs(q) > Radius || Math.Abs(r) > Radius || Math.Abs(s) > Radius)
+        if (!Contains(cube))
         {
             content = default;
             return false;

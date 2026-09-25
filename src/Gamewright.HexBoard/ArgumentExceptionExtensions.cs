@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 public static class ArgumentExceptionExtensions
 {

@@ -5,12 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug HexLib",
-            "type": "dotnet",
-            "request": "launch",
-            "projectPath": "${workspaceFolder}/src/HexLib/HexLib.csproj"
-        },
-        {
             "name": "C#: Havanna Debug",
             "type": "dotnet",
             "request": "launch",

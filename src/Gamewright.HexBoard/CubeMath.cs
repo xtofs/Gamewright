@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 /// <summary>
 /// provides utility methods for working with cube coordinates in a hexagonal grid.

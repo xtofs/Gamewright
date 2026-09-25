@@ -1,5 +1,5 @@
 ﻿
-namespace HexLib.Tests;
+namespace Gamewright.HexBoard.Tests;
 
 public class CubeMathTests
 {

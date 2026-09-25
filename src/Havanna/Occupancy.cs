@@ -1,5 +1,6 @@
-namespace HexLib;
+namespace Havanna;
 
+using Gamewright.HexBoard;
 
 public readonly struct Occupancy : ICellContent
 {

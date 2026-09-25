@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 
 static class IntExtensions

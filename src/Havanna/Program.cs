@@ -1,6 +1,7 @@
 namespace Havanna;
 
 using Gamewright;
+using Gamewright.HexBoard;
 using Silk.NET.Input;
 using Gamewright.Utilities;
 using System.Numerics;
@@ -20,7 +21,7 @@ public sealed class Program : IDisposable
 
     private const int N = 5;
     private readonly HexLayout _layout = new(N);
-    private HexCoordinate? _selectedHex;
+    private CubeCoord? _selectedHex;
 
     public Program()
     {
@@ -80,7 +81,7 @@ public sealed class Program : IDisposable
         if (_layout.TryGetHex(pos, out var hex))
         {
             _selectedHex = hex;
-            Console.WriteLine($"Selected hex: {hex.X},{hex.Y},{hex.Z}");
+            Console.WriteLine($"Selected hex: {hex.Q},{hex.R},{hex.S}");
         }
     }
 
@@ -102,7 +103,7 @@ public sealed class Program : IDisposable
 
             var sz = _layout.HexRadius / 2f;
             var rect = new Rect(point.X - sz, point.Y - sz, 2 * sz, 2 * sz);
-            canvas.DrawCenteredText(_font, $"{hex.X},{hex.Y},{hex.Z}", rect, sz / 60f, Colors.White);
+            canvas.DrawCenteredText(_font, $"{hex.Q},{hex.R},{hex.S}", rect, sz / 60f, Colors.White);
         }
 
         static int Mod(int a, int m)
@@ -122,9 +123,9 @@ public sealed class Program : IDisposable
         canvas.DrawText(_font, $"{1f / _window.FrameTime:f0}",
             new System.Numerics.Vector2(scale * 0.01f, scale * 0.01f), Colors.Black);
 #endif
-        static Color GetColor(HexCoordinate hex)
+        static Color GetColor(CubeCoord hex)
         {
-            return Mod(hex.X - hex.Y, 3) switch
+            return Mod(hex.Q - hex.R, 3) switch
             {
                 0 => Color.FromARGB(0xff404040),
                 1 => Color.FromARGB(0xff808080),

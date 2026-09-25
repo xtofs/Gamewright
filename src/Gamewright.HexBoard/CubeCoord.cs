@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 using System.Diagnostics.CodeAnalysis;
 
@@ -47,6 +47,38 @@ public readonly record struct CubeCoord
     /// which is the same as (|q| + |r| + |s|) / 2 because of the constraint q + r + s = 0.
     /// </remarks>
     public int Ring() => CubeMath.RingOfCube(Q, R, S);
+
+    /// <summary>
+    /// Determines if the cube lies within a circular hexagonal grid with the given radius.
+    /// </summary>
+    public bool IsWithin(int radius) => Ring() <= radius;
+
+    public static CubeCoord operator +(CubeCoord a, CubeCoord b) => new(a.Q + b.Q, a.R + b.R, a.S + b.S);
+
+    public static CubeCoord operator -(CubeCoord a, CubeCoord b) => new(a.Q - b.Q, a.R - b.R, a.S - b.S);
+
+    public static CubeCoord operator *(int k, CubeCoord c) => new(k * c.Q, k * c.R, k * c.S);
+
+    // indexed by HexDirection
+    private static readonly CubeCoord[] Offsets =
+    [
+        new(-1, 0, 1),  // NorthWest
+        new(0, -1, 1),  // NorthEast
+        new(1, -1, 0),  // East
+        new(1, 0, -1),  // SouthEast
+        new(0, 1, -1),  // SouthWest
+        new(-1, 1, 0),  // West
+    ];
+
+    /// <summary>
+    /// Returns the offset from a hexagon to its neighbor in the given direction.
+    /// </summary>
+    public static CubeCoord Offset(HexDirection direction) => Offsets[(int)direction];
+
+    /// <summary>
+    /// Returns the neighboring hexagon in the given direction.
+    /// </summary>
+    public CubeCoord Neighbor(HexDirection direction) => this + Offset(direction);
 
 
     /// <summary>

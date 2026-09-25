@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 /// <summary>
 /// Represents an edge of the pointy-top hexagonal board .

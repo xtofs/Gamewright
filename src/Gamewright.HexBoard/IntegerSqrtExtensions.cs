@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 using System;
 using System.Runtime.CompilerServices;

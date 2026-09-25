@@ -1,4 +1,4 @@
-namespace HexLib;
+namespace Gamewright.HexBoard;
 
 /// <summary>Generic disjoint-set structure over indices [0, n). Carries no domain-specific payload.</summary>
 public sealed class UnionFind
