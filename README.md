@@ -1,9 +1,8 @@
 # Gamewright
 
-A general-purpose 2D rendering library for .NET, built on OpenGL via Silk.NET.
-Designed for interactive 2D applications — board games, simulations, and custom
-2D engines — with a composable layout system, GPU-accelerated drawing, and a
-clean public API that stays free of windowing-library types.
+A 2D rendering library for .NET, designed for interactive 2D applications — board games, simulations, and custom
+2D engines — with a composable layout system, GPU-accelerated drawing, and a clean public API that stays free of windowing-library types.
+Built on OpenGL via Silk.NET.
 
 ## Quick start
 

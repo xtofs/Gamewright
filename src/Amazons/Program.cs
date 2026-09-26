@@ -5,7 +5,6 @@ using Gamewright.SquareBoard;
 using Gamewright.SquareBoard.Graphics;
 using Silk.NET.Input;
 using Gamewright.Graphics.Utilities;
-using System.Numerics;
 
 public sealed class Program : IDisposable
 {

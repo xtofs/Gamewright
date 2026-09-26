@@ -4,9 +4,7 @@ using Gamewright.Graphics;
 using Gamewright.HexBoard;
 using Gamewright.HexBoard.Graphics;
 using Silk.NET.Input;
-using Gamewright.Graphics.Utilities;
 using System.Numerics;
-using System.Diagnostics.CodeAnalysis;
 
 public sealed class Program : IDisposable
 {
@@ -17,7 +15,7 @@ public sealed class Program : IDisposable
         program.Run();
     }
 
-    private const int N = 4;
+    private const int N = 8;
 
     private readonly Window _window;
     private TextureAtlas<Piece> _spriteTextures = default!;
@@ -125,7 +123,7 @@ public sealed class Program : IDisposable
                 var rect = new Rect(position, size);
 
                 // to debug the layout of the piece within the hexagon
-                canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 1));
+                // canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 1));
 
                 rect = rect.Inset(0.05f * Layout.HexagonRadius);
                 canvas.DrawSprite(_spriteTextures, piece, rect);
@@ -183,12 +181,12 @@ public sealed class Program : IDisposable
         {
             var (col, row) = piece switch
             {
-                Piece.White => (0, 1),
-                Piece.Black => (1, 0),
+                Piece.White => (0, 2),
+                Piece.Black => (0, 3),
                 _ => throw new InvalidOperationException("Unexpected piece")
             };
 
-            return new Rect(col * 400, row * 400, 400, 400);
+            return new Rect(col * 204 + 24, row * 162, 156, 162);
         }
     }
 }
