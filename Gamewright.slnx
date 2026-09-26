@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Havanna/Havanna.csproj" />
     <Project Path="src/Gamewright.HexBoard/Gamewright.HexBoard.csproj" />
+    <Project Path="src/Gamewright.HexGeometry/Gamewright.HexGeometry.csproj" />
     <Project Path="src/Gamewright.Graphics/Gamewright.Graphics.csproj" />
     <Project Path="src/Amazons/Amazons.csproj" />
     <Project Path="src/Chess/Chess.csproj" />
@@ -11,5 +12,6 @@
     <Project Path="tests/CodeGen.Tests/CodeGen.Tests.csproj" />
     <Project Path="tests/Gamewright.Graphics.Tests/Gamewright.Graphics.Tests.csproj" />
     <Project Path="tests/Gamewright.HexBoard.Tests/Gamewright.HexBoard.Tests.csproj" />
+    <Project Path="tests/Gamewright.HexGeometry.Tests/Gamewright.HexGeometry.Tests.csproj" />
   </Folder>
 </Solution>

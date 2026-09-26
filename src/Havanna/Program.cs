@@ -2,6 +2,7 @@ namespace Havanna;
 
 using Gamewright.Graphics;
 using Gamewright.HexBoard;
+using Gamewright.HexGeometry;
 using Silk.NET.Input;
 using Gamewright.Graphics.Utilities;
 using System.Numerics;
@@ -16,10 +17,10 @@ public sealed class Program : IDisposable
         program.Run();
     }
 
-    private const int N = 8;
+    private const int N = 4;
 
     private readonly Window _window;
-    private TextureAtlas<Piece> _textures = default!;
+    private TextureAtlas<Piece> _spriteTextures = default!;
     private Font _font = default!;
 
     private readonly HexGrid<Piece> _board;
@@ -59,14 +60,14 @@ public sealed class Program : IDisposable
 
     private void OnLoad(GraphicsDevice device)
     {
-        _textures = CreatePieceAtlas(device);
+        _spriteTextures = CreatePieceAtlas(device);
         _font = device.LoadFont(FontPath, 48);
     }
 
     private void OnUnload()
     {
         _font?.Dispose();
-        // _sprites?.Dispose();
+        _spriteTextures?.Dispose();
     }
 
     private void OnMouseDown(Vector2 pos, MouseButton _)
@@ -96,31 +97,35 @@ public sealed class Program : IDisposable
 
         foreach (var hex in _layout.GetGrid())
         {
-            var point = _layout.GetCenter(hex);
-            var pts = _layout.GetHexagon(hex);
+            var corners = _layout.GetHexCorners(hex);
 
             var fill = GetFillColor(hex);
             var strokeColor = GetStrokeColor(hex);
             var isSelected = _selectedHex == hex;
             var stroke = isSelected ? new Stroke(Colors.HotPink, 9) : new Stroke(strokeColor, 3); ;
 
-            canvas.DrawPolygon(pts, fill: fill, stroke: stroke);
+            canvas.DrawPolygon(corners, fill: fill, stroke: stroke);
         }
 
         foreach (var hex in _layout.GetGrid())
         {
             if (_board.TryGetContent(hex, out var piece))
             {
-                // var point = _layout.GetCenter(hex);
+                // using the inscribed square for positioning the piece within the hexagon
+                // var (position, size) = _layout.GetInscribedSquare(hex);
+                // var rect = new Rect(position, size);
 
-                // var r = _layout.HexRadius;
-                // var a = r * (3 - MathF.Sqrt(3));
-                // var a2 = a / 2f;
+                // Use the bounding box of the hexagon’s inscribed circle.
+                var diameter = MathF.Sqrt(3) * _layout.HexagonRadius;
+                var size = new Vector2(diameter);
+                var position = _layout.GetCenter(hex) - size / 2;
+                var rect = new Rect(position, size);
 
-                // var rect = new Rect(point.X - a2, point.Y - a2, a, a);
-                var rect = _layout.GetInscribedSquare(hex);
-                canvas.DrawSprite(_textures, piece, rect);
-                canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 2));
+                // to debug the layout of the piece within the hexagon
+                canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 1));
+
+                rect = rect.Inset(0.05f * _layout.HexagonRadius);
+                canvas.DrawSprite(_spriteTextures, piece, rect);
             }
         }
 
@@ -128,8 +133,8 @@ public sealed class Program : IDisposable
 
         if (_selectedHex is { } selectedHex)
         {
-            var pts = _layout.GetHexagon(selectedHex);
-            canvas.DrawPolygon(pts, stroke: new Stroke(Colors.HotPink, 9));
+            var corners = _layout.GetHexCorners(selectedHex);
+            canvas.DrawPolygon(corners, stroke: new Stroke(Colors.HotPink, 9));
         }
 #if !SHOW_FPS
         var scale = MathF.Min(canvas.FramebufferSize.X, canvas.FramebufferSize.Y);
@@ -175,12 +180,12 @@ public sealed class Program : IDisposable
         {
             var (col, row) = piece.Symbol switch
             {
-                'X' => (1, 0),
-                'O' => (1, 1),
+                'X' => (0, 1),
+                'O' => (1, 0),
                 _ => throw new InvalidOperationException("Unexpected piece")
             };
 
-            return new Rect(col * 250, row * 250, 250, 250);
+            return new Rect(col * 400, row * 400, 400, 400);
         }
     }
 }

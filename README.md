@@ -51,6 +51,7 @@ context, render loop, input, and resource lifetime.
 src/
   Gamewright.Graphics/   # rendering library: window, input, layout, drawing
   Gamewright.HexBoard/   # hex grid topology: coordinates, neighbors, regions
+  Gamewright.HexGeometry/ # hex grid on screen: pixel <-> hex, corners, fitting
   Chess/                 # chess board demo
   Amazons/               # Game of Amazons demo
   Havanna/               # Havannah demo (hex board)
@@ -58,6 +59,7 @@ src/
 tests/
   Gamewright.Graphics.Tests/
   Gamewright.HexBoard.Tests/
+  Gamewright.HexGeometry.Tests/
   CodeGen.Tests/
 ```
 
