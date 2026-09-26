@@ -1,8 +1,8 @@
 namespace Amazons;
 
-using Gamewright;
+using Gamewright.Graphics;
 using Silk.NET.Input;
-using Gamewright.Utilities;
+using Gamewright.Graphics.Utilities;
 using System.Numerics;
 
 public sealed class Program : IDisposable

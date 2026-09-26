@@ -1,7 +1,7 @@
 namespace Chess;
 
 using System.Numerics;
-using Gamewright;
+using Gamewright.Graphics;
 
 /// <summary>
 /// Maps an 8x8 board of ranks and files onto the inner 8×8 of a 10×10 grid, with thin

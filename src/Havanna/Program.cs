@@ -1,9 +1,9 @@
 namespace Havanna;
 
-using Gamewright;
+using Gamewright.Graphics;
 using Gamewright.HexBoard;
 using Silk.NET.Input;
-using Gamewright.Utilities;
+using Gamewright.Graphics.Utilities;
 using System.Numerics;
 using System.Diagnostics.CodeAnalysis;
 

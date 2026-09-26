@@ -1,7 +1,7 @@
 namespace Amazons;
 
 using System.Numerics;
-using Gamewright;
+using Gamewright.Graphics;
 
 /// <summary>
 /// Maps an 10x10 board of ranks and files onto the inner 10×10 of a 12×12 grid, with thin

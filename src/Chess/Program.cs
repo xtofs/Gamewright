@@ -1,8 +1,8 @@
 namespace Chess;
 
-using Gamewright;
+using Gamewright.Graphics;
 using Silk.NET.Input;
-using Gamewright.Utilities;
+using Gamewright.Graphics.Utilities;
 
 public sealed class Program : IDisposable
 {

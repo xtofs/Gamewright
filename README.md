@@ -8,7 +8,7 @@ clean public API that stays free of windowing-library types.
 ## Quick start
 
 ```csharp
-using Gamewright;
+using Gamewright.Graphics;
 
 Font font = default!;
 
@@ -49,12 +49,15 @@ context, render loop, input, and resource lifetime.
 
 ```
 src/
-  Gamewright/        # library
-  Chess/          # chess board demo
-  Amazons/        # Game of Amazons demo
-  CodeGen/        # GLSL → C# shader-binding generator
+  Gamewright.Graphics/   # rendering library: window, input, layout, drawing
+  Gamewright.HexBoard/   # hex grid topology: coordinates, neighbors, regions
+  Chess/                 # chess board demo
+  Amazons/               # Game of Amazons demo
+  Havanna/               # Havannah demo (hex board)
+  CodeGen/               # GLSL → C# shader-binding generator
 tests/
-  Gamewright.Tests/
+  Gamewright.Graphics.Tests/
+  Gamewright.HexBoard.Tests/
   CodeGen.Tests/
 ```
 

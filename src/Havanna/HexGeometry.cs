@@ -1,7 +1,7 @@
 namespace Havanna;
 
 using System.Numerics;
-using Gamewright;
+using Gamewright.Graphics;
 using Gamewright.HexBoard;
 
 /// <summary>
