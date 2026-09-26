@@ -23,7 +23,7 @@ public sealed class HexRegionTracker<TGroup>
     }
 
     /// <summary>Registers a placement, unioning it with same-group cells among <paramref name="neighbors"/>.</summary>
-    public void Register(int index, TGroup group, ushort edgeMask, ushort cornerMask, ReadOnlySpan<int> neighbors)
+    public void Register(int index, TGroup group, ushort edgeMask, ushort cornerMask, ReadOnlySpan<short> neighbors)
     {
         _group[index] = group;
         _edgeMask[index] = edgeMask;

@@ -21,17 +21,30 @@
 
   <ItemGroup>
     <ShaderSource Include="Shaders/**/*.glsl;Shaders/**/*.vert;Shaders/**/*.frag;Shaders/shaders.json" />
-    <ShaderGeneratorSource Include="../CodeGen/**/*.cs" Exclude="../CodeGen/bin/**;../CodeGen/obj/**" />
-    <Compile Include="$(IntermediateOutputPath)Generated/ShaderBindings.g.cs" />
+    <!-- build order only: CodeGen runs as a tool, its assembly is not referenced -->
+    <ProjectReference Include="../CodeGen/CodeGen.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <!-- 
-    the following causes a permanent error in VsCode's Problems tab 
-    please uncomment when shader on CodeGen change
+  <!--
+    Regenerates Generated/ShaderBindings.g.cs, which is checked in so the IDE and a fresh clone
+    always see it. Skipped in design-time builds (VS Code / IntelliSense) and whenever neither
+    a shader nor CodeGen changed since the last generation.
   -->
-  <!-- <Target Name="GenerateShaderBindings" BeforeTargets="CoreCompile">
-    <MSBuild Projects="../CodeGen/CodeGen.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
-    <Exec Command="dotnet &quot;../CodeGen/bin/$(Configuration)/net10.0/CodeGen.dll&quot; &quot;$(MSBuildProjectDirectory)/Shaders/shaders.json&quot; &quot;$(IntermediateOutputPath)Generated&quot;" />
-  </Target> -->
+  <PropertyGroup>
+    <ShaderBindingsFile>$(MSBuildProjectDirectory)/Generated/ShaderBindings.g.cs</ShaderBindingsFile>
+  </PropertyGroup>
+
+  <Target Name="ResolveCodeGen">
+    <MSBuild Projects="../CodeGen/CodeGen.csproj" Targets="GetTargetPath">
+      <Output TaskParameter="TargetOutputs" PropertyName="CodeGenAssembly" />
+    </MSBuild>
+  </Target>
+
+  <Target Name="GenerateShaderBindings" BeforeTargets="CoreCompile" DependsOnTargets="ResolveCodeGen"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="@(ShaderSource);$(CodeGenAssembly)" Outputs="$(ShaderBindingsFile)">
+    <Exec Command="dotnet &quot;$(CodeGenAssembly)&quot; &quot;$(MSBuildProjectDirectory)/Shaders/shaders.json&quot; &quot;$(MSBuildProjectDirectory)/Generated&quot;" />
+    <Touch Files="$(ShaderBindingsFile)" />
+  </Target>
 
 </Project>

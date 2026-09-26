@@ -1,4 +1,4 @@
-namespace Gamewright.HexGeometry.Tests;
+namespace Gamewright.HexBoard.Graphics.Tests;
 
 using System.Numerics;
 using Gamewright.HexBoard;

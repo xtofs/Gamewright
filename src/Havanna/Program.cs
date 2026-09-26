@@ -2,7 +2,7 @@ namespace Havanna;
 
 using Gamewright.Graphics;
 using Gamewright.HexBoard;
-using Gamewright.HexGeometry;
+using Gamewright.HexBoard.Graphics;
 using Silk.NET.Input;
 using Gamewright.Graphics.Utilities;
 using System.Numerics;
@@ -27,7 +27,9 @@ public sealed class Program : IDisposable
 
     private Piece _currentPlayer = Piece.White;
 
-    private readonly HexLayout _layout = new(N);
+    private readonly RootNode _root = new();
+    private readonly HexBoardNode _boardNode;
+    private HexLayout Layout => _boardNode.Layout;
     private CubeCoord? _selectedHex;
 
     public Program()
@@ -40,8 +42,9 @@ public sealed class Program : IDisposable
         _window.MouseDown += OnMouseDown;
 
         _board = new HexGrid<Piece>(N);
+        _boardNode = _root.AddHexBoard(N);
 
-        _board.PlacePiece(new CubeCoord(0, 0, 0), Piece.Black);
+        _board.Place(new CubeCoord(0, 0, 0), Piece.Black);
     }
 
     private void OnKeyDown(Key key)
@@ -72,14 +75,14 @@ public sealed class Program : IDisposable
 
     private void OnMouseDown(Vector2 pos, MouseButton _)
     {
-        if (_layout.TryGetHex(pos, out var hex))
+        if (_boardNode.TryGetHex(pos, out var hex))
         {
             // _selectedHex = hex;
             // Console.WriteLine($"Selected hex: {hex.Q},{hex.R},{hex.S}");
 
-            if (!_board.TryGetContent(hex, out var content))
+            if (!_board.IsOccupied(hex))
             {
-                _board.PlacePiece(hex, _currentPlayer);
+                _board.Place(hex, _currentPlayer);
                 _currentPlayer = _currentPlayer.Opponent;
             }
         }
@@ -93,11 +96,11 @@ public sealed class Program : IDisposable
     {
         #region Draw Board
 
-        _layout.Update(canvas.FramebufferSize);
+        _root.Update(canvas.FramebufferSize);
 
-        foreach (var hex in _layout.GetGrid())
+        foreach (var hex in _board.Coords)
         {
-            var corners = _layout.GetHexCorners(hex);
+            var corners = Layout.GetHexCorners(hex);
 
             var fill = GetFillColor(hex);
             var strokeColor = GetStrokeColor(hex);
@@ -107,24 +110,24 @@ public sealed class Program : IDisposable
             canvas.DrawPolygon(corners, fill: fill, stroke: stroke);
         }
 
-        foreach (var hex in _layout.GetGrid())
+        foreach (var hex in _board.Coords)
         {
-            if (_board.TryGetContent(hex, out var piece))
+            if (_board.TryGet(hex, out var piece))
             {
                 // using the inscribed square for positioning the piece within the hexagon
-                // var (position, size) = _layout.GetInscribedSquare(hex);
+                // var (position, size) = Layout.GetInscribedSquare(hex);
                 // var rect = new Rect(position, size);
 
                 // Use the bounding box of the hexagon’s inscribed circle.
-                var diameter = MathF.Sqrt(3) * _layout.HexagonRadius;
+                var diameter = MathF.Sqrt(3) * Layout.HexagonRadius;
                 var size = new Vector2(diameter);
-                var position = _layout.GetCenter(hex) - size / 2;
+                var position = Layout.GetCenter(hex) - size / 2;
                 var rect = new Rect(position, size);
 
                 // to debug the layout of the piece within the hexagon
                 canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 1));
 
-                rect = rect.Inset(0.05f * _layout.HexagonRadius);
+                rect = rect.Inset(0.05f * Layout.HexagonRadius);
                 canvas.DrawSprite(_spriteTextures, piece, rect);
             }
         }
@@ -133,7 +136,7 @@ public sealed class Program : IDisposable
 
         if (_selectedHex is { } selectedHex)
         {
-            var corners = _layout.GetHexCorners(selectedHex);
+            var corners = Layout.GetHexCorners(selectedHex);
             canvas.DrawPolygon(corners, stroke: new Stroke(Colors.HotPink, 9));
         }
 #if !SHOW_FPS
@@ -173,15 +176,15 @@ public sealed class Program : IDisposable
             throw new FileNotFoundException("The chess piece atlas was not found.", path);
         }
 
-        var regions = Piece.GetValues().ToDictionary(p => p, GetRegion);
+        var regions = Enum.GetValues<Piece>().ToDictionary(p => p, GetRegion);
         return device.LoadAtlas(path, regions);
 
         static Rect GetRegion(Piece piece)
         {
-            var (col, row) = piece.Symbol switch
+            var (col, row) = piece switch
             {
-                'X' => (0, 1),
-                'O' => (1, 0),
+                Piece.White => (0, 1),
+                Piece.Black => (1, 0),
                 _ => throw new InvalidOperationException("Unexpected piece")
             };
 

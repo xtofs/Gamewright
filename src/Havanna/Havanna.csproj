@@ -12,7 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Gamewright.Graphics\Gamewright.Graphics.csproj" />
     <ProjectReference Include="..\Gamewright.HexBoard\Gamewright.HexBoard.csproj" />
-    <ProjectReference Include="..\Gamewright.HexGeometry\Gamewright.HexGeometry.csproj" />
+    <ProjectReference Include="..\Gamewright.HexBoard.Graphics\Gamewright.HexBoard.Graphics.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -32,21 +32,24 @@ no control flow. A token scan is sufficient:
 
 For a single 2D library, a Roslyn incremental source generator is not worth
 the cost (API version pinning, awkward debugging, caching-semantics
-footguns). Instead: a normal console app run as a pre-build MSBuild target,
-writing generated `.cs` into the intermediate output folder and including it
-in the compile.
+footguns). Instead: a normal console app run as a pre-build MSBuild target in
+`Gamewright.Graphics.csproj`.
 
-```xml
-<Target Name="GenShaderBindings" BeforeTargets="CoreCompile">
-  <Exec Command="dotnet run --project ../ShaderGen -- $(ProjectDir)Shaders $(IntermediateOutputPath)Generated" />
-</Target>
-<ItemGroup>
-  <Compile Include="$(IntermediateOutputPath)Generated/**/*.cs" />
-</ItemGroup>
-```
+- The output, `Generated/ShaderBindings.g.cs`, lives in the source tree and is
+  checked in. The IDE, a fresh clone and CI always see it, and shader changes
+  show up in code review.
+- `CodeGen` is a `ProjectReference` with `ReferenceOutputAssembly="false"`,
+  which only orders the build; its path comes from its `GetTargetPath` target.
+- The target has `Inputs="@(ShaderSource);$(CodeGenAssembly)"` and the
+  generated file as `Outputs`, so it only runs when a shader or CodeGen changed.
+- It is skipped in design-time builds (`DesignTimeBuild == true`), which is
+  what IDEs like VS Code run in the background. Running an `Exec` there caused
+  persistent errors in the Problems tab.
+- CodeGen only rewrites the file if its content changed; the target then
+  touches it so the up-to-date check stays accurate.
 
-Debuggable like any other executable; regenerates on build (acceptable —
-uniform declarations don't change every keystroke).
+Debuggable like any other executable (`dotnet run --project src/CodeGen --
+src/Gamewright.Graphics/Shaders/shaders.json src/Gamewright.Graphics/Generated`).
 
 ## Uniform locations
 

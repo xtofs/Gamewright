@@ -1,4 +1,4 @@
-namespace Gamewright.HexGeometry;
+namespace Gamewright.HexBoard.Graphics;
 
 using System.Numerics;
 using Gamewright.HexBoard;
@@ -39,7 +39,6 @@ public sealed class HexLayout(int radius)
 
     /// <summary>
     /// Scales and centers the grid so it fills an area of <paramref name="areaSize"/> at (0, 0).
-    /// Call once per frame in OnRender (and on Resize).
     /// </summary>
     public void Update(Vector2 areaSize) => Update(Vector2.Zero, areaSize);
 

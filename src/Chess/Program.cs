@@ -1,6 +1,8 @@
 namespace Chess;
 
 using Gamewright.Graphics;
+using Gamewright.SquareBoard;
+using Gamewright.SquareBoard.Graphics;
 using Silk.NET.Input;
 using Gamewright.Graphics.Utilities;
 
@@ -18,11 +20,13 @@ public sealed class Program : IDisposable
 
     private Font _font = default!;
 
-    private readonly BoardLayout _boardLayout = new();
+    private readonly RootNode _root = new();
 
-    private readonly Occupancy[,] _board;
+    private readonly SquareBoardNode _boardNode;
 
-    private (int File, int Rank)? _selectedSquare;
+    private readonly SquareGrid<Piece> _board;
+
+    private SquareCoord? _selectedSquare;
 
     public Program()
     {
@@ -33,19 +37,19 @@ public sealed class Program : IDisposable
         _window.KeyDown += OnKeyDown;
         _window.MouseDown += OnMouseDown;
 
+        _boardNode = _root.AddSquareBoard(8, 8, insetFraction: 0.01f);
         _board = SetupBoard();
     }
 
-    private static Occupancy[,] SetupBoard()
+    private static SquareGrid<Piece> SetupBoard()
     {
-        var board = new Occupancy[8, 8];
+        var board = new SquareGrid<Piece>(8, 8);
         var rng = new Random(0);
-        foreach (var (f, r) in Enumerable.Cartesian(8, 8))
+        foreach (var square in board.Coords)
         {
             if (rng.NextDouble() < 0.5)
             {
-                var piece = rng.NextEnum<Piece>();
-                board[f, r] = piece.ToOccupancy();
+                board.Place(square, rng.NextEnum<Piece>());
             }
         }
         return board;
@@ -79,7 +83,7 @@ public sealed class Program : IDisposable
 
     private void OnMouseDown(System.Numerics.Vector2 pos, MouseButton _)
     {
-        if (_boardLayout.TryGetSquare(pos, out var square))
+        if (_boardNode.TryGetSquare(pos, out var square))
         {
             Console.WriteLine("file {0} rank {1}", square.File, square.Rank);
             _selectedSquare = square;
@@ -88,26 +92,25 @@ public sealed class Program : IDisposable
 
     private void OnRender(Canvas canvas, float deltaTime)
     {
-        _boardLayout.Update(canvas.FramebufferSize);
+        _root.Update(canvas.FramebufferSize);
 
         #region Draw Labels
-        var labels = _boardLayout.GetLabels().ToList();
+        var labels = _boardNode.GetLabels().ToList();
         var labelScale = labels
             .Where(l => !string.IsNullOrEmpty(l.Text))
             .Min(l => canvas.MeasureFitScale(_font, l.Text, l.Rect));
-        foreach (var (rect, text, _) in labels)
+        foreach (var (rect, text) in labels)
         {
             canvas.DrawCenteredText(_font, text, rect, labelScale * 0.9f, Colors.White);
         }
         #endregion
 
         #region Draw Board
-        foreach (var (f, r) in Enumerable.Cartesian(8, 8))
+        foreach (var square in _board.Coords)
         {
-            var (rect, color) = _boardLayout.GetSquare(f, r);
+            var (rect, color) = _boardNode.GetSquare(square);
             canvas.DrawRectangle(rect, color);
-            var occupancy = _board[f, r];
-            if (occupancy.TryGetPiece(out var piece))
+            if (_board.TryGet(square, out var piece))
             {
                 canvas.DrawSprite(_sprites, piece, rect.Inset(5));
             }
@@ -117,8 +120,7 @@ public sealed class Program : IDisposable
         #region Draw Selected Square
         if (_selectedSquare.HasValue)
         {
-            var (file, rank) = _selectedSquare.Value;
-            var (rect, _) = _boardLayout.GetSquare(file, rank);
+            var (rect, _) = _boardNode.GetSquare(_selectedSquare.Value);
             canvas.DrawRoundedRectangle(rect.Inset(5), new CornerRadii(10), Colors.Transparent, new Stroke(Colors.Red, 10));
         }
         #endregion

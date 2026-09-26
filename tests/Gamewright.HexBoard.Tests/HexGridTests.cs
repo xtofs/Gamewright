@@ -72,7 +72,7 @@ public class HexGridTests
                 : cube.Ring() == Radius ? 4
                 : 6;
 
-            Assert.Equal(expected, CountValid(_grid.Neighbors(index)));
+            Assert.Equal(expected, _grid.Neighbors(index).Length);
         }
     }
 
@@ -83,7 +83,7 @@ public class HexGridTests
         // each of the 6*(R-1) other boundary cells misses 2, i.e. 6*(2R+1) in total
         var expected = 6 * _grid.Count - 6 * (2 * Radius + 1);
 
-        var actual = Enumerable.Range(0, _grid.Count).Sum(i => CountValid(_grid.Neighbors(i)));
+        var actual = Enumerable.Range(0, _grid.Count).Sum(i => _grid.Neighbors(i).Length);
 
         Assert.Equal(expected, actual);
     }
@@ -93,13 +93,9 @@ public class HexGridTests
     {
         for (var a = 0; a < _grid.Count; a++)
         {
-            foreach (var direction in Enum.GetValues<HexDirection>())
+            foreach (var b in _grid.Neighbors(a))
             {
-                var b = _grid.Neighbors(a)[(int)direction];
-                if (b >= 0)
-                {
-                    Assert.Equal(a, _grid.Neighbors(b)[(int)direction.Opposite()]);
-                }
+                Assert.Contains((short)a, _grid.Neighbors(b).ToArray());
             }
         }
     }
@@ -109,26 +105,90 @@ public class HexGridTests
     {
         foreach (var (cube, index) in CubeMath.EnumerateGridCoords(Radius))
         {
-            foreach (var direction in Enum.GetValues<HexDirection>())
-            {
-                var neighbor = cube.Neighbor(direction);
-                var expected = neighbor.IsWithin(Radius) ? neighbor.GetIndex() : -1;
+            var expected = Enum.GetValues<HexDirection>()
+                .Select(cube.Neighbor)
+                .Where(neighbor => neighbor.IsWithin(Radius))
+                .Select(neighbor => (short)neighbor.GetIndex())
+                .Order();
 
-                Assert.Equal(expected, _grid.Neighbors(index)[(int)direction]);
-            }
+            Assert.Equal(expected, _grid.Neighbors(index).ToArray().Order());
         }
     }
 
     [Fact]
-    public void Contains_MatchesTryGetContent()
+    public void Contains_MatchesTryGet()
     {
         var inside = new CubeCoord(Radius, -Radius, 0);
         var outside = new CubeCoord(Radius + 1, -Radius, -1);
+        _grid.Place(inside, Stone.X);
 
         Assert.True(_grid.Contains(inside));
-        Assert.True(_grid.TryGetContent(inside, out _));
+        Assert.True(_grid.TryGet(inside, out _));
         Assert.False(_grid.Contains(outside));
-        Assert.False(_grid.TryGetContent(outside, out _));
+        Assert.False(_grid.TryGet(outside, out _));
+    }
+
+    [Fact]
+    public void NewGrid_IsEmpty()
+    {
+        Assert.All(_grid.Coords, cube => Assert.False(_grid.IsOccupied(cube)));
+        Assert.Null(_grid[new CubeCoord(0, 0, 0)]);
+    }
+
+    [Fact]
+    public void Place_ThenRemove_EmptiesTheCell()
+    {
+        var cube = new CubeCoord(1, -1, 0);
+
+        _grid.Place(cube, Stone.O);
+        Assert.Equal(Stone.O, _grid[cube]);
+
+        Assert.True(_grid.Remove(cube));
+        Assert.False(_grid.IsOccupied(cube));
+        Assert.False(_grid.Remove(cube));
+    }
+
+    [Fact]
+    public void Place_DefaultValue_IsStillOccupied()
+    {
+        var cube = new CubeCoord(0, 0, 0);
+
+        _grid.Place(cube, default);
+
+        Assert.True(_grid.TryGet(cube, out var stone));
+        Assert.Equal(Stone.X, stone);
+    }
+
+    [Fact]
+    public void Move_TransfersThePiece()
+    {
+        var from = new CubeCoord(0, 0, 0);
+        var to = new CubeCoord(0, 1, -1);
+        _grid.Place(from, Stone.O);
+
+        _grid.Move(from, to);
+
+        Assert.False(_grid.IsOccupied(from));
+        Assert.Equal(Stone.O, _grid[to]);
+    }
+
+    [Fact]
+    public void Place_OutsideTheGrid_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => _grid.Place(new CubeCoord(Radius + 1, -Radius, -1), Stone.X));
+    }
+
+    [Fact]
+    public void Format_ShowsPiecesAndEmptyCells()
+    {
+        // the center of a radius 1 grid is the middle cell of the middle row
+        var grid = new HexGrid<Stone>(1);
+        char Center() => grid.Format(stone => stone == Stone.X ? 'X' : 'O').Split('\n')[1][2];
+
+        Assert.Equal('.', Center());
+
+        grid.Place(new CubeCoord(0, 0, 0), Stone.O);
+        Assert.Equal('O', Center());
     }
 
     [Fact]
@@ -169,23 +229,9 @@ public class HexGridTests
         tracker.Register(index, group, _grid.EdgeMask(index), _grid.CornerMask(index), _grid.Neighbors(index));
     }
 
-    private static int CountValid(ReadOnlySpan<int> neighbors)
+    private enum Stone
     {
-        var count = 0;
-        foreach (var n in neighbors)
-        {
-            if (n >= 0)
-            {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private readonly struct Stone : ICellContent
-    {
-        public char Symbol => 'X';
-
-        public bool Equals(ICellContent? other) => other is Stone;
+        X,
+        O,
     }
 }

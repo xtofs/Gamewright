@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Gamewright.Graphics\Gamewright.Graphics.csproj" />
+    <ProjectReference Include="..\Gamewright.SquareBoard\Gamewright.SquareBoard.csproj" />
+    <ProjectReference Include="..\Gamewright.SquareBoard.Graphics\Gamewright.SquareBoard.Graphics.csproj" />
   </ItemGroup>
 
   <ItemGroup>

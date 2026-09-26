@@ -19,7 +19,13 @@ public static partial class Program
             Directory.CreateDirectory(outputDirectory);
 
             var outputPath = Path.Combine(outputDirectory, "ShaderBindings.g.cs");
-            File.WriteAllText(outputPath, CSharpBindingEmitter.Emit(input));
+            var bindings = CSharpBindingEmitter.Emit(input);
+
+            // leave an unchanged file alone so it does not trigger recompiles or show up in git
+            if (!File.Exists(outputPath) || File.ReadAllText(outputPath) != bindings)
+            {
+                File.WriteAllText(outputPath, bindings);
+            }
 
             return 0;
         }

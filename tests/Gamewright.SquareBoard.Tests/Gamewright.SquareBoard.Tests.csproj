@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Gamewright.HexGeometry\Gamewright.HexGeometry.csproj" />
+    <ProjectReference Include="..\..\src\Gamewright.SquareBoard\Gamewright.SquareBoard.csproj" />
   </ItemGroup>
 
 </Project>

@@ -86,6 +86,13 @@ public abstract class LeafNode : Node
 
 public static class NodeExtensions
 {
+    /// <summary>Adds a custom <paramref name="node"/>, e.g. one defined outside this library, and returns it.</summary>
+    public static TNode Add<TNode>(this Node parent, TNode node) where TNode : Node
+    {
+        parent.AddChild(node);
+        return node;
+    }
+
     public static AspectCanvasNode AddCenteredCanvas(this Node parent, float ratio = 1f, float insetFraction = 0f)
     {
         var node = new AspectCanvasNode(ratio, insetFraction);

@@ -1,4 +1,4 @@
-namespace Gamewright.HexGeometry;
+namespace Gamewright.HexBoard.Graphics;
 
 using System.Numerics;
 using System.Runtime.CompilerServices;

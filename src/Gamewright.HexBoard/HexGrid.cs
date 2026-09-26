@@ -8,7 +8,11 @@ using System.Diagnostics.CodeAnalysis;
 /// Each hexagon is at most <see cref="Radius"/> hexagons away from the center hexagon. 
 /// (0 is the degenerate case with just one hexagon)
 /// </summary>
-public partial class HexGrid<T> where T : ICellContent
+/// <remarks>
+/// The grid tracks occupancy itself, so <typeparamref name="T"/> only describes real pieces
+/// and needs no "empty" value.
+/// </remarks>
+public class HexGrid<T> where T : struct
 {
     private readonly Cell[] _cells;
     readonly ushort[] _edgeMask;
@@ -17,6 +21,9 @@ public partial class HexGrid<T> where T : ICellContent
     public int Radius { get; }
 
     public int Count { get; }
+
+    /// <summary>All coordinates of the grid.</summary>
+    public IEnumerable<CubeCoord> Coords => CubeMath.CubeHexRegion(Radius);
 
     public HexGrid(int radius)
     {
@@ -73,7 +80,7 @@ public partial class HexGrid<T> where T : ICellContent
         public override readonly string ToString() => $"{{Cell {(IsOccupied ? $"{Content}" : "Empty")}, Neighbors {Neighbors} }}";
     }
 
-    public string Format()
+    public string Format(Func<T, char> symbol)
     {
         var totalLength = 0;
         for (var r = Radius; r >= -Radius; r--)
@@ -83,7 +90,7 @@ public partial class HexGrid<T> where T : ICellContent
             totalLength += Math.Abs(r) + (cellsInRow * 2) + 1;
         }
 
-        return string.Create(totalLength, this, static (span, grid) =>
+        return string.Create(totalLength, this, (span, grid) =>
         {
             var cursor = 0;
             // the second component, r, is the row
@@ -99,9 +106,9 @@ public partial class HexGrid<T> where T : ICellContent
                 for (var p = pMin; p <= pMax; p++)
                 {
                     var cube = new CubeCoord(p, -(p + r), r);
-                    if (grid.TryGetContent(cube, out var content))
+                    if (grid.Contains(cube))
                     {
-                        span[cursor] = content.Symbol == '\0' ? '.' : content.Symbol;
+                        span[cursor] = grid.TryGet(cube, out var piece) ? symbol(piece) : '.';
                         var cellIndex = cube.GetIndex();
                         if (grid._edgeMask[cellIndex] != 0)
                         {
@@ -136,21 +143,57 @@ public partial class HexGrid<T> where T : ICellContent
         }
     }
 
-    public void PlacePiece(CubeCoord cube, T piece)
+    /// <summary>The piece at <paramref name="cube"/>, or null if the cell is empty.</summary>
+    public T? this[CubeCoord cube] => TryGet(cube, out var piece) ? piece : null;
+
+    public bool IsOccupied(CubeCoord cube) => _cells[IndexOf(cube)].IsOccupied;
+
+    public void Place(CubeCoord cube, T piece)
     {
-        var index = cube.GetIndex();
-        PlaceStone(index, piece);
+        ref var cell = ref _cells[IndexOf(cube)];
+        cell.IsOccupied = true;
+        cell.Content = piece;
     }
 
-    internal void PlaceStone(int idx, T content)
+    /// <summary>Empties the cell at <paramref name="cube"/>. Returns false if it was already empty.</summary>
+    public bool Remove(CubeCoord cube)
     {
-        ref var cell = ref _cells[idx];
-        cell.IsOccupied = true;
-        cell.Content = content;
+        ref var cell = ref _cells[IndexOf(cube)];
+        var wasOccupied = cell.IsOccupied;
+        cell.IsOccupied = false;
+        cell.Content = default;
+        return wasOccupied;
     }
+
+    /// <summary>Moves the piece at <paramref name="from"/> to <paramref name="to"/>, replacing whatever is there.</summary>
+    public void Move(CubeCoord from, CubeCoord to)
+    {
+        if (!TryGet(from, out var piece))
+        {
+            throw new InvalidOperationException($"There is no piece at {from}.");
+        }
+        Remove(from);
+        Place(to, piece);
+    }
+
+    /// <summary>Returns true and the piece if <paramref name="cube"/> is in the grid and occupied.</summary>
+    public bool TryGet(CubeCoord cube, out T piece)
+    {
+        if (Contains(cube) && _cells[cube.GetIndex()] is { IsOccupied: true } cell)
+        {
+            piece = cell.Content;
+            return true;
+        }
+        piece = default;
+        return false;
+    }
+
+    private int IndexOf(CubeCoord cube) => Contains(cube)
+        ? cube.GetIndex()
+        : throw new ArgumentOutOfRangeException(nameof(cube), cube, $"Not within a grid of radius {Radius}.");
 
     /// <summary>Grid-geometry data for callers composing region/connectivity tracking on top of the grid.</summary>
-    public ReadOnlySpan<short> Neighbors(int index) => _cells[index].Neighbors;
+    public ReadOnlySpan<short> Neighbors(int index) => _cells[index].Neighbors.AsReadOnlySpan();
 
     public ushort EdgeMask(int index) => _edgeMask[index];
 
@@ -170,23 +213,6 @@ public partial class HexGrid<T> where T : ICellContent
     // }
 
     public bool Contains(CubeCoord cube) => cube.IsWithin(Radius);
-
-    public bool TryGetContent(CubeCoord cube, [MaybeNullWhen(false)] out T content)
-    {
-        var index = cube.GetIndex();
-        if (index >= _cells.Length || index < 0)
-        {
-            content = default;
-            return false;
-        }
-        if (_cells[index].IsOccupied)
-        {
-            content = _cells[index].Content;
-            return true;
-        }
-        content = default;
-        return false;
-    }
 
     public bool IsCorner(CubeCoord hex, [MaybeNullWhen(false)] out GridCornerDirection dir)
     {

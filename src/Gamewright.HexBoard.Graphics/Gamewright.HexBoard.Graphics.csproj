@@ -8,10 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Gamewright.HexGeometry.Tests" />
+    <InternalsVisibleTo Include="Gamewright.HexBoard.Graphics.Tests" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Gamewright.Graphics\Gamewright.Graphics.csproj" />
     <ProjectReference Include="..\Gamewright.HexBoard\Gamewright.HexBoard.csproj" />
   </ItemGroup>
 
