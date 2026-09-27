@@ -194,12 +194,12 @@ public class HexGridTests
     [Fact]
     public void RegionTracker_ChainAlongNorthEdge_TouchesOnlyNorthEdge()
     {
-        var tracker = new HexRegionTracker<char>(_grid.Count);
+        var tracker = new HexRegionTracker<Stone>(_grid);
 
         // the north edge is s == Radius, its corners are at q == -Radius and q == 0
         for (var q = -Radius + 1; q < 0; q++)
         {
-            Place(tracker, new CubeCoord(q, -q - Radius, Radius), 'X');
+            _grid.Place(new CubeCoord(q, -q - Radius, Radius), Stone.X);
         }
 
         var index = new CubeCoord(-1, 1 - Radius, Radius).GetIndex();
@@ -210,12 +210,12 @@ public class HexGridTests
     [Fact]
     public void RegionTracker_DoesNotMergeDifferentGroups()
     {
-        var tracker = new HexRegionTracker<char>(_grid.Count);
+        var tracker = new HexRegionTracker<Stone>(_grid);
         var a = new CubeCoord(-1, 1 - Radius, Radius);
         var b = a.Neighbor(HexDirection.East);
 
-        Place(tracker, a, 'X');
-        Place(tracker, b, 'O');
+        _grid.Place(a, Stone.X);
+        _grid.Place(b, Stone.O);
 
         Assert.Equal(1 << (int)GridEdgeDirection.North, tracker.EdgeMask(a.GetIndex()));
         Assert.Equal(0, tracker.CornerMask(a.GetIndex()));
@@ -223,13 +223,108 @@ public class HexGridTests
         Assert.Equal(0, tracker.EdgeMask(b.GetIndex()));
     }
 
-    private void Place(HexRegionTracker<char> tracker, CubeCoord cube, char group)
+    [Fact]
+    public void RegionTracker_FormatRegion_ShowsMembersAndAggregateMasks()
     {
-        var index = cube.GetIndex();
-        tracker.Register(index, group, _grid.EdgeMask(index), _grid.CornerMask(index), _grid.Neighbors(index));
+        var tracker = new HexRegionTracker<Stone>(_grid);
+        var edge = new CubeCoord(-1, 1 - Radius, Radius);
+        var corner = edge.Neighbor(HexDirection.East);
+
+        _grid.Place(edge, Stone.X);
+        _grid.Place(corner, Stone.X);
+
+        var output = tracker.FormatRegion(corner.GetIndex());
+        Assert.Contains("corners=0x02, bridge=False", output);
+        Assert.Contains($"  {edge.GetIndex()} ({edge.Q},{edge.R},{edge.S}): group=X", output);
+        Assert.Contains($"  {corner.GetIndex()} ({corner.Q},{corner.R},{corner.S}): group=X", output);
     }
 
-    private enum Stone
+    [Fact]
+    public void RegionTracker_FirstDefaultValuedPiece_HasOnlyOneMember()
+    {
+        var tracker = new HexRegionTracker<Stone>(_grid);
+        var corner = new CubeCoord(-Radius, 0, Radius);
+        _grid.Place(corner, Stone.X);
+
+        Assert.Equal(1 << (int)GridCornerDirection.NorthWest, tracker.CornerMask(corner.GetIndex()));
+        Assert.Equal(2, tracker.FormatRegion(corner.GetIndex()).Split('\n').Length);
+        Assert.False(tracker.HasBridge(corner.GetIndex()));
+    }
+
+    [Theory]
+    [InlineData(Stone.X)]
+    [InlineData(Stone.O)]
+    public void RegionTracker_ConnectedCorners_FormBridge(Stone piece)
+    {
+        var tracker = new HexRegionTracker<Stone>(_grid);
+        var firstCorner = new CubeCoord(-Radius, 0, Radius);
+        var lastCorner = new CubeCoord(0, -Radius, Radius);
+        _grid.Place(firstCorner, piece);
+
+        for (var q = -Radius + 1; q < 0; q++)
+        {
+            var edge = new CubeCoord(q, -q - Radius, Radius);
+            _grid.Place(edge, piece);
+            Assert.False(tracker.HasBridge(edge.GetIndex()));
+        }
+
+        _grid.Place(lastCorner, piece);
+        Assert.True(tracker.HasBridge(lastCorner.GetIndex()));
+        Assert.Equal(
+            (1 << (int)GridCornerDirection.NorthWest) | (1 << (int)GridCornerDirection.NorthEast),
+            tracker.CornerMask(firstCorner.GetIndex()));
+
+        _grid.Remove(new CubeCoord(-2, 2 - Radius, Radius));
+        Assert.False(tracker.HasBridge(firstCorner.GetIndex()));
+        Assert.False(tracker.HasBridge(lastCorner.GetIndex()));
+    }
+
+    [Fact]
+    public void RegionTracker_OpponentInterruptsBridge()
+    {
+        var tracker = new HexRegionTracker<Stone>(_grid);
+        for (var q = -Radius; q <= 0; q++)
+        {
+            _grid.Place(new CubeCoord(q, -q - Radius, Radius), q == -2 ? Stone.O : Stone.X);
+        }
+
+        Assert.False(tracker.HasBridge(new CubeCoord(-Radius, 0, Radius).GetIndex()));
+        Assert.False(tracker.HasBridge(new CubeCoord(0, -Radius, Radius).GetIndex()));
+    }
+
+    [Fact]
+    public void RegionTracker_ThreeDistinctEdges_FormFork()
+    {
+        var tracker = new HexRegionTracker<Stone>(_grid);
+        var center = new CubeCoord(0, 0, 0);
+        _grid.Place(center, Stone.X);
+
+        for (var distance = 1; distance <= Radius; distance++)
+        {
+            _grid.Place(new CubeCoord(-1, 1 - distance, distance), Stone.X);
+            _grid.Place(new CubeCoord(1, -distance, distance - 1), Stone.X);
+        }
+
+        Assert.False(tracker.HasFork(center.GetIndex()));
+
+        for (var distance = 1; distance <= Radius; distance++)
+        {
+            _grid.Place(new CubeCoord(-distance, 1, distance - 1), Stone.X);
+        }
+
+        Assert.True(tracker.HasFork(center.GetIndex()));
+        Assert.Equal(0, tracker.CornerMask(center.GetIndex()));
+    }
+
+    [Fact]
+    public void RegionTracker_EmptyCell_CannotStartRegion()
+    {
+        var tracker = new HexRegionTracker<Stone>(_grid);
+
+        Assert.Throws<InvalidOperationException>(() => tracker.HasBridge(new CubeCoord(0, 0, 0).GetIndex()));
+    }
+
+    public enum Stone
     {
         X,
         O,

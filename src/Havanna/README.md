@@ -1,5 +1,3 @@
+# Notes
 
-
-
-
-https://en.wikipedia.org/wiki/Havannah_(board_game)
+[Wikipedia](<https://en.wikipedia.org/wiki/Havannah_(board_game)>)

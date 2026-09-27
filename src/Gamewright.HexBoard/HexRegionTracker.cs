@@ -3,61 +3,85 @@ namespace Gamewright.HexBoard;
 using System.Numerics;
 
 /// <summary>
-/// Tracks connected regions of same-group cells on a <see cref="HexGrid{T}"/>, aggregating each
-/// region's edge/corner touch masks. Composed on top of a grid without the grid knowing about it:
-/// callers feed it placements (group, edge mask, corner mask, neighbors) taken from the grid.
+/// Finds connected regions of same-group cells on a <see cref="HexGrid{T}"/>, aggregating each
+/// region's edge/corner touch masks from the current grid contents.
 /// </summary>
-public sealed class HexRegionTracker<TGroup>
+public sealed class HexRegionTracker<TGroup>(HexGrid<TGroup> grid) where TGroup : struct
 {
-    private readonly UnionFind _unionFind;
-    private readonly ushort[] _edgeMask;
-    private readonly ushort[] _cornerMask;
-    private readonly TGroup?[] _group;
+    private readonly HexGrid<TGroup> _grid = grid;
 
-    public HexRegionTracker(int cellCount)
+    private Region<TGroup> FindRegion(int index)
     {
-        _unionFind = new UnionFind(cellCount);
-        _edgeMask = new ushort[cellCount];
-        _cornerMask = new ushort[cellCount];
-        _group = new TGroup?[cellCount];
-    }
-
-    /// <summary>Registers a placement, unioning it with same-group cells among <paramref name="neighbors"/>.</summary>
-    public void Register(int index, TGroup group, ushort edgeMask, ushort cornerMask, ReadOnlySpan<short> neighbors)
-    {
-        _group[index] = group;
-        _edgeMask[index] = edgeMask;
-        _cornerMask[index] = cornerMask;
-
-        foreach (var neighbor in neighbors)
+        if (!_grid.TryGet(CubeCoord.FromIndex(index), out var group))
         {
-            if (neighbor >= 0 && EqualityComparer<TGroup?>.Default.Equals(_group[neighbor], group))
+            throw new InvalidOperationException($"Cell {index} is not occupied.");
+        }
+
+        var visited = new bool[_grid.Count];
+        var pending = new Stack<int>();
+        var members = new List<int>();
+        ushort edges = 0;
+        ushort corners = 0;
+        visited[index] = true;
+        pending.Push(index);
+
+        while (pending.Count > 0)
+        {
+            var current = pending.Pop();
+            members.Add(current);
+            edges |= _grid.EdgeMask(current);
+            corners |= _grid.CornerMask(current);
+
+            foreach (var neighbor in _grid.Neighbors(current))
             {
-                Merge(index, neighbor);
+                if (visited[neighbor])
+                {
+                    continue;
+                }
+
+                visited[neighbor] = true;
+                if (_grid.TryGet(CubeCoord.FromIndex(neighbor), out var piece)
+                    && EqualityComparer<TGroup>.Default.Equals(piece, group))
+                {
+                    pending.Push(neighbor);
+                }
             }
         }
+
+        return (group, edges, corners, members);
     }
 
-    private void Merge(int a, int b)
-    {
-        var ra = _unionFind.Find(a);
-        var rb = _unionFind.Find(b);
-        if (ra == rb)
-        {
-            return;
-        }
+    public ushort EdgeMask(int index) => FindRegion(index).Edges;
 
-        var root = _unionFind.Union(a, b);
-        var absorbed = root == ra ? rb : ra;
-        _edgeMask[root] |= _edgeMask[absorbed];
-        _cornerMask[root] |= _cornerMask[absorbed];
-    }
-
-    public ushort EdgeMask(int index) => _edgeMask[_unionFind.Find(index)];
-
-    public ushort CornerMask(int index) => _cornerMask[_unionFind.Find(index)];
+    public ushort CornerMask(int index) => FindRegion(index).Corners;
 
     public bool HasFork(int index) => BitOperations.PopCount(EdgeMask(index)) >= 3;
 
     public bool HasBridge(int index) => BitOperations.PopCount(CornerMask(index)) >= 2;
+
+    public string FormatRegion(int index)
+    {
+        var region = FindRegion(index);
+        var members = region.Members.Order()
+            .Select(member =>
+            {
+                var coord = CubeCoord.FromIndex(member);
+                return $"  {member} ({coord.Q},{coord.R},{coord.S}): group={region.Group}, edges=0x{_grid.EdgeMask(member):X2}, corners=0x{_grid.CornerMask(member):X2}";
+            });
+
+        return $"Region {index}: edges=0x{region.Edges:X2}, corners=0x{region.Corners:X2}, bridge={BitOperations.PopCount(region.Corners) >= 2}, fork={BitOperations.PopCount(region.Edges) >= 3}\n{string.Join("\n", members)}";
+    }
+}
+
+internal record struct Region<TGroup>(TGroup Group, ushort Edges, ushort Corners, List<int> Members) where TGroup : struct
+{
+    public static implicit operator (TGroup Group, ushort Edges, ushort Corners, List<int> Members)(Region<TGroup> value)
+    {
+        return (value.Group, value.Edges, value.Corners, value.Members);
+    }
+
+    public static implicit operator Region<TGroup>((TGroup Group, ushort Edges, ushort Corners, List<int> Members) value)
+    {
+        return new Region<TGroup>(value.Group, value.Edges, value.Corners, value.Members);
+    }
 }
