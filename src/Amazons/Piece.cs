@@ -6,5 +6,5 @@ public enum Piece : byte
 
     BlackQueen = 0x02,
 
-    Flame = 0x03
+    Fire = 0x03
 }

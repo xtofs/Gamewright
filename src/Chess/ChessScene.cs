@@ -18,9 +18,9 @@ public sealed class ChessScene : IScene
 
     private readonly SquareBoardNode _boardNode;
 
-    private readonly SquareGrid<Piece> _board;
+    private readonly CheckerBoard<Piece> _board;
 
-    private SquareCoord? _selectedSquare;
+    private Coordinate? _selectedSquare;
 
     public ChessScene(Window window)
     {
@@ -29,9 +29,9 @@ public sealed class ChessScene : IScene
         _board = SetupBoard();
     }
 
-    private static SquareGrid<Piece> SetupBoard()
+    private static CheckerBoard<Piece> SetupBoard()
     {
-        var board = new SquareGrid<Piece>(8, 8);
+        var board = new CheckerBoard<Piece>(8, 8);
         var rng = new Random(0);
         foreach (var square in board.Coords)
         {
@@ -69,7 +69,7 @@ public sealed class ChessScene : IScene
     {
         if (_boardNode.TryGetSquare(pos, out var square))
         {
-            Console.WriteLine("file {0} rank {1}", square.File, square.Rank);
+            Console.WriteLine("file {0} rank {1}", square.Column, square.Row);
             _selectedSquare = square;
         }
     }
@@ -92,7 +92,7 @@ public sealed class ChessScene : IScene
         #region Draw Board
         foreach (var square in _board.Coords)
         {
-            var (rect, color) = _boardNode.GetSquare(square);
+            var (rect, color) = _boardNode.GetSquareAndColor(square);
             canvas.DrawRectangle(rect, color);
             if (_board.TryGet(square, out var piece))
             {
@@ -104,7 +104,7 @@ public sealed class ChessScene : IScene
         #region Draw Selected Square
         if (_selectedSquare.HasValue)
         {
-            var (rect, _) = _boardNode.GetSquare(_selectedSquare.Value);
+            var (rect, _) = _boardNode.GetSquareAndColor(_selectedSquare.Value);
             canvas.DrawRoundedRectangle(rect.Inset(5), new CornerRadii(10), Colors.Transparent, new Stroke(Colors.Red, 10));
         }
         #endregion

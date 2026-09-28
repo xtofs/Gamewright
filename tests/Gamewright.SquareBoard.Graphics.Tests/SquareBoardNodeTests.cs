@@ -21,8 +21,8 @@ public class SquareBoardNodeTests
     {
         var board = CreateBoard(Size);
 
-        Assert.Equal(new Rect(10, 290, 40, 40), board.GetSquare(new SquareCoord(0, 0)).Rect);
-        Assert.Equal(new Rect(290, 10, 40, 40), board.GetSquare(new SquareCoord(7, 7)).Rect);
+        Assert.Equal(new Rect(10, 290, 40, 40), board.GetSquareAndColor(new Coordinate(0, 0)).Rect);
+        Assert.Equal(new Rect(290, 10, 40, 40), board.GetSquareAndColor(new Coordinate(7, 7)).Rect);
     }
 
     [Fact]
@@ -30,8 +30,8 @@ public class SquareBoardNodeTests
     {
         var board = CreateBoard(Size);
 
-        Assert.Equal(board.Dark, board.GetSquare(new SquareCoord(0, 0)).Color);
-        Assert.Equal(board.Light, board.GetSquare(new SquareCoord(7, 0)).Color);
+        Assert.Equal(board.Dark, board.GetSquareAndColor(new Coordinate(0, 0)).Color);
+        Assert.Equal(board.Light, board.GetSquareAndColor(new Coordinate(7, 0)).Color);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class SquareBoardNodeTests
 
         foreach (var (file, rank) in Enumerable.Range(0, 8).SelectMany(f => Enumerable.Range(0, 8).Select(r => (f, r))))
         {
-            var square = new SquareCoord(file, rank);
+            var square = new Coordinate(file, rank);
 
             Assert.True(board.TryGetSquare(board.GetCenter(square), out var actual));
             Assert.Equal(square, actual);
@@ -75,6 +75,6 @@ public class SquareBoardNodeTests
         var board = CreateBoard(new Vector2(320, 320), withLabels: false);
 
         Assert.Empty(board.GetLabels());
-        Assert.Equal(new Rect(0, 280, 40, 40), board.GetSquare(new SquareCoord(0, 0)).Rect);
+        Assert.Equal(new Rect(0, 280, 40, 40), board.GetSquareAndColor(new Coordinate(0, 0)).Rect);
     }
 }

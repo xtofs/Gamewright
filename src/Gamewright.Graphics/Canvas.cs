@@ -274,7 +274,7 @@ public sealed class Canvas : IDisposable
         }
     }
 
-    public void DrawSprite(
+    private void DrawSprite(
         Texture2D texture,
         Rect destination,
         TextureRegion? source = null,

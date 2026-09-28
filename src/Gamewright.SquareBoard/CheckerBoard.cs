@@ -1,59 +1,59 @@
 namespace Gamewright.SquareBoard;
 
 /// <summary>
-/// A rectangular board of <see cref="Files"/> × <see cref="Ranks"/> squares.
+/// A rectangular board of <see cref="Columns"/> × <see cref="Rows"/> squares.
 /// </summary>
 /// <remarks>
 /// The grid tracks occupancy itself, so <typeparamref name="T"/> only describes real pieces
 /// and needs no "empty" value.
 /// </remarks>
-public class SquareGrid<T> where T : struct
+public class CheckerBoard<T> where T : struct
 {
     private readonly T?[] _cells;
 
-    public SquareGrid(int files, int ranks)
+    public CheckerBoard(int files, int ranks)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(files);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ranks);
 
-        Files = files;
-        Ranks = ranks;
+        Columns = files;
+        Rows = ranks;
         _cells = new T?[files * ranks];
     }
 
-    public int Files { get; }
+    public int Columns { get; }
 
-    public int Ranks { get; }
+    public int Rows { get; }
 
     public int Count => _cells.Length;
 
     /// <summary>All squares of the grid, rank by rank.</summary>
-    public IEnumerable<SquareCoord> Coords
+    public IEnumerable<Coordinate> Coords
     {
         get
         {
-            for (var rank = 0; rank < Ranks; rank++)
+            for (var rank = 0; rank < Rows; rank++)
             {
-                for (var file = 0; file < Files; file++)
+                for (var file = 0; file < Columns; file++)
                 {
-                    yield return new SquareCoord(file, rank);
+                    yield return new Coordinate(file, rank);
                 }
             }
         }
     }
 
-    public bool Contains(SquareCoord square)
-        => square.File >= 0 && square.File < Files && square.Rank >= 0 && square.Rank < Ranks;
+    public bool IsValid(Coordinate square) =>
+       square.Column >= 0 && square.Column < Columns && square.Row >= 0 && square.Row < Rows;
 
     /// <summary>The piece at <paramref name="square"/>, or null if it is empty.</summary>
-    public T? this[SquareCoord square] => _cells[IndexOf(square)];
+    public T? this[Coordinate square] => _cells[IndexOf(square)];
 
-    public bool IsOccupied(SquareCoord square) => _cells[IndexOf(square)].HasValue;
+    public bool IsOccupied(Coordinate square) => _cells[IndexOf(square)].HasValue;
 
     /// <summary>Returns true and the piece if <paramref name="square"/> is on the grid and occupied.</summary>
-    public bool TryGet(SquareCoord square, out T piece)
+    public bool TryGet(Coordinate square, out T piece)
     {
-        if (Contains(square) && _cells[IndexOf(square)] is { } value)
+        if (IsValid(square) && _cells[IndexOf(square)] is { } value)
         {
             piece = value;
             return true;
@@ -62,10 +62,10 @@ public class SquareGrid<T> where T : struct
         return false;
     }
 
-    public void Place(SquareCoord square, T piece) => _cells[IndexOf(square)] = piece;
+    public void Place(Coordinate square, T piece) => _cells[IndexOf(square)] = piece;
 
     /// <summary>Empties <paramref name="square"/>. Returns false if it was already empty.</summary>
-    public bool Remove(SquareCoord square)
+    public bool Remove(Coordinate square)
     {
         var index = IndexOf(square);
         var wasOccupied = _cells[index].HasValue;
@@ -74,7 +74,7 @@ public class SquareGrid<T> where T : struct
     }
 
     /// <summary>Moves the piece at <paramref name="from"/> to <paramref name="to"/>, replacing whatever is there.</summary>
-    public void Move(SquareCoord from, SquareCoord to)
+    public void Move(Coordinate from, Coordinate to)
     {
         if (!TryGet(from, out var piece))
         {
@@ -88,15 +88,16 @@ public class SquareGrid<T> where T : struct
     /// The squares from <paramref name="from"/> (exclusive) in <paramref name="direction"/>
     /// up to the edge of the grid, regardless of occupancy.
     /// </summary>
-    public IEnumerable<SquareCoord> Ray(SquareCoord from, SquareDirection direction)
+    public IEnumerable<Coordinate> Ray(Coordinate from, Direction direction)
     {
-        for (var square = from.Neighbor(direction); Contains(square); square = square.Neighbor(direction))
+        for (var square = from.Neighbor(direction); IsValid(square); square = square.Neighbor(direction))
         {
             yield return square;
         }
     }
 
-    private int IndexOf(SquareCoord square) => Contains(square)
-        ? square.Rank * Files + square.File
-        : throw new ArgumentOutOfRangeException(nameof(square), square, $"Not on a {Files}×{Ranks} grid.");
+    private int IndexOf(Coordinate square) => IsValid(square)
+        ? square.Row * Columns + square.Column
+        : throw new ArgumentOutOfRangeException(nameof(square), square, $"Not on a {Columns}×{Rows} grid.");
+
 }

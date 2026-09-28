@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		// {
+		// 	"type": "dotnet",
+		// 	"task": "watch Amazons",
+		// 	"file": "/Users/christof/code/Gamewright/src/Amazons/Amazons.csproj",
+		// 	"problemMatcher": [],
+		// 	"label": "dotnet: watch Amazons",
+		// },
+		{
+			"label": "watch Amazons",
+			"type": "shell",
+			"command": "dotnet watch --project src/Amazons --hot-reload --non-interactive",
+			"problemMatcher": []
+		}
+	]
+}
