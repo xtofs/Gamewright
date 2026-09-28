@@ -66,7 +66,7 @@ public static class CubeMath
 
     public static int RingOfCube(int q, int r, int s)
     {
-        return Math.Max(Math.Max(q.Abs(), r.Abs()), s.Abs());
+        return Math.Max(q.Abs(), r.Abs(), s.Abs());
     }
 
     public static int NumberOfHexagonsInRing(int k)
@@ -86,9 +86,9 @@ public static class CubeMath
         //             return k;
 
         if (ix < 7) { return 1; }                        // the loop returns 1 for ix < 7, including ix ≤ 0
-        var n = 12L * ix - 3;
+        var n = 12 * ix - 3;
         var r = Math.ISqrt(n);
-        return (int)((3 + r) / 6);
+        return (3 + r) / 6;
     }
 
     #endregion
