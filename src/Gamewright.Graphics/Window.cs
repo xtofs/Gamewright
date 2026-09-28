@@ -13,6 +13,7 @@ public sealed class Window : IDisposable
     private readonly IWindow _window;
     private Canvas? _canvas;
     private readonly ExponentialMovingAverage _frameTime = new(100);
+    private string? _lastRenderError;
     private bool _disposed;
 
     public Window(string title, int width = 1000, int height = 700,
@@ -56,16 +57,39 @@ public sealed class Window : IDisposable
         _window.Run();
     }
 
+    /// <summary>Runs the window with <paramref name="scene"/> handling its events.</summary>
+    public void Run(IScene scene)
+    {
+        ArgumentNullException.ThrowIfNull(scene);
+        Load += scene.Load;
+        Render += scene.Render;
+        Unload += scene.Unload;
+        KeyDown += scene.KeyDown;
+        MouseDown += scene.MouseDown;
+        try
+        {
+            Run();
+        }
+        finally
+        {
+            Load -= scene.Load;
+            Render -= scene.Render;
+            Unload -= scene.Unload;
+            KeyDown -= scene.KeyDown;
+            MouseDown -= scene.MouseDown;
+        }
+    }
+
     private void HandleLoad()
     {
         var gl = GL.GetApi(_window);
         _canvas = new Canvas(gl, new SilkViewport(_window));
         var input = _window.CreateInput();
         foreach (var kb in input.Keyboards)
-            kb.KeyDown += (_, key, _) => KeyDown?.Invoke(key);
+            kb.KeyDown += (_, key, _) => Guarded(nameof(KeyDown), () => KeyDown?.Invoke(key));
         foreach (var mouse in input.Mice)
-            mouse.MouseDown += (m, btn) =>
-                MouseDown?.Invoke(_canvas.WindowToFramebuffer(m.Position), btn);
+            mouse.MouseDown += (m, btn) => Guarded(nameof(MouseDown), () =>
+                MouseDown?.Invoke(_canvas.WindowToFramebuffer(m.Position), btn));
         Load?.Invoke(new GraphicsDevice(gl));
     }
 
@@ -74,8 +98,44 @@ public sealed class Window : IDisposable
         _frameTime.Add(dt);
         r.Clear(Background);
         r.Begin(dt);
-        Render?.Invoke(r, dt);
-        r.End();
+        try
+        {
+            Render?.Invoke(r, dt);
+            if (_lastRenderError is not null)
+            {
+                Console.WriteLine("Render recovered.");
+                _lastRenderError = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Keep the window alive, e.g. while a Hot Reload edit is broken. Logged once per
+            // distinct error, since this repeats every frame.
+            var error = ex.ToString();
+            if (error != _lastRenderError)
+            {
+                Console.Error.WriteLine($"Render failed: {error}");
+                _lastRenderError = error;
+            }
+        }
+        finally
+        {
+            // draws whatever was batched before the exception and leaves the canvas ready for
+            // the next frame
+            r.End();
+        }
+    }
+
+    private static void Guarded(string handler, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"{handler} failed: {ex}");
+        }
     }
 
     private void HandleClosing()
