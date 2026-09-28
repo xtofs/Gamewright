@@ -10,7 +10,7 @@ public class SquareDirectionTests
     {
         var sum = direction.ToOffset() + direction.Opposite().ToOffset();
 
-        Assert.Equal(new Offset(0, 0), sum);
+        Assert.Equal(Offset.Zero, sum);
     }
 
     [Fact]
@@ -28,6 +28,38 @@ public class SquareDirectionTests
         Assert.Equal(
             Directions.OrthogonalAndDiagonal.Order(),
             Directions.Orthogonal.Concat(Directions.Diagonal).Order());
+    }
+}
+
+public class OffsetTests
+{
+    [Fact]
+    public void Difference_LeadsFromOneCoordinateToTheOther()
+    {
+        var from = new Coordinate(1, 4);
+        var to = new Coordinate(6, 2);
+
+        Assert.Equal(new Offset(5, -2), to - from);
+        Assert.Equal(to, from + (to - from));
+        Assert.Equal(from, to - (to - from));
+    }
+
+    [Fact]
+    public void Multiples_OfDirections_Combine()
+    {
+        var knightJump = 2 * Direction.North + Direction.East;
+
+        Assert.Equal(new Offset(1, -2), knightJump);
+        Assert.Equal(new Coordinate(2, 1), new Coordinate(1, 3) + knightJump);
+    }
+
+    [Fact]
+    public void Negation_IsTheOppositeDirection()
+    {
+        var square = new Coordinate(3, 3);
+
+        Assert.Equal(Direction.West.ToOffset(), -Direction.East.ToOffset());
+        Assert.Equal(square + Direction.West, square - Direction.East);
     }
 }
 

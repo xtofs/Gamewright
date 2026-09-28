@@ -39,6 +39,8 @@ public static class DirectionExtensions
         public static Offset operator *(int multiplier, Direction a) => a.ToOffset() * multiplier;
 
         public static Coordinate operator +(Coordinate c, Direction d) => c + d.ToOffset();
+
+        public static Coordinate operator -(Coordinate c, Direction d) => c - d.ToOffset();
     }
 
     extension(Direction direction)
