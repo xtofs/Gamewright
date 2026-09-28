@@ -8,20 +8,33 @@ using System.Runtime.InteropServices;
 
 internal static class GeometryBuilder
 {
+    /// <summary>The thinnest width, in framebuffer pixels, that the shaders' anti-aliasing draws cleanly.</summary>
+    public const float MinimumWidth = 1f;
+
+    /// <summary>
+    /// Widens a line thinner than <see cref="MinimumWidth"/> to that width and fades its color by the same
+    /// factor, so it keeps its visual weight instead of breaking up. A zero width (no line) stays zero.
+    /// </summary>
+    public static (float Width, Color Color) ClampToHairline(float width, Color color)
+        => width is > 0 and < MinimumWidth
+            ? (MinimumWidth, color.WithAlpha(color.A * width / MinimumWidth))
+            : (width, color);
+
     public static RoundedBoxInstance CreateRoundedBox(
         Rect rectangle,
         CornerRadii radii,
         Color color,
         Stroke stroke)
     {
+        var (strokeWidth, strokeColor) = ClampToHairline(stroke.Width, stroke.Color);
         return new RoundedBoxInstance
         {
             Center = rectangle.Position + rectangle.Size * 0.5f,
             HalfExtent = rectangle.Size * 0.5f,
             CornerRadii = new Vector4(radii.BottomRight, radii.TopRight, radii.TopLeft, radii.BottomLeft),
             FillColor = color.Vector4,
-            StrokeColor = stroke.Color.Vector4,
-            StrokeWidth = stroke.Width,
+            StrokeColor = strokeColor.Vector4,
+            StrokeWidth = strokeWidth,
         };
     }
 
@@ -42,14 +55,16 @@ internal static class GeometryBuilder
         Color color,
         Stroke stroke)
     {
+        (thickness, color) = ClampToHairline(thickness, color);
+        var (strokeWidth, strokeColor) = ClampToHairline(stroke.Width, stroke.Color);
         return new CapsuleInstance
         {
             Start = start,
             End = end,
             Thickness = thickness,
             FillColor = color.Vector4,
-            StrokeColor = stroke.Color.Vector4,
-            StrokeWidth = stroke.Width,
+            StrokeColor = strokeColor.Vector4,
+            StrokeWidth = strokeWidth,
         };
     }
 
@@ -67,6 +82,8 @@ internal static class GeometryBuilder
 
     public static PolylineInstances CreatePolyline(ReadOnlySpan<Vector2> points, float thickness, Color color)
     {
+        // clamp once so the round joins match the segments
+        (thickness, color) = ClampToHairline(thickness, color);
         var segments = new List<CapsuleInstance>(Math.Max(0, points.Length - 1));
         var joins = new List<RoundedBoxInstance>(Math.Max(0, points.Length - 2));
         for (var index = 1; index < points.Length; index++)
@@ -95,6 +112,8 @@ internal static class GeometryBuilder
         float thickness,
         Color color)
     {
+        (thickness, color) = ClampToHairline(thickness, color);
+
         // a collinear control point only changes the speed along a straight line;
         // moving it to the middle makes the shader draw the piece as a plain segment
         var chord = end - start;

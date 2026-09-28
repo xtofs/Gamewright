@@ -33,6 +33,12 @@ public static class RectExtensions
         public Rect Inset(Vector2 amount)
             => new Rect(rect.X + amount.X, rect.Y + amount.Y, rect.Width - 2 * amount.X, rect.Height - 2 * amount.Y);
 
+        /// <summary>
+        /// Returns <paramref name="fraction"/> of the shorter side, for line widths, insets and corner radii
+        /// that should grow and shrink with the rectangle they decorate.
+        /// </summary>
+        public float Fraction(float fraction) => fraction * MathF.Min(rect.Width, rect.Height);
+
         public Vector2 TopLeft
         {
             get => new Vector2(rect.X, rect.Y);

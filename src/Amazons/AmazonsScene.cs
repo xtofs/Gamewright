@@ -123,7 +123,7 @@ public sealed class AmazonsScene : IScene
             {
                 var start = _boardNode.GetCenter(selected);
                 var end = _boardNode.GetCenter(target);
-                canvas.DrawArrow(start, end, 16, Colors.GreenYellow);
+                canvas.DrawArrow(start, end, _boardNode.GetSquare(selected).Fraction(0.12f), Colors.GreenYellow);
 
                 foreach (var square in _game.GetAvailableArrowTargets(target))
                 {
@@ -133,7 +133,8 @@ public sealed class AmazonsScene : IScene
             else
             {
                 var (rect, _) = _boardNode.GetSquareAndColor(selected);
-                canvas.DrawRoundedRectangle(rect.Inset(5), new CornerRadii(10), Colors.Transparent, new Stroke(Colors.GreenYellow, 10));
+                canvas.DrawRoundedRectangle(rect.Inset(rect.Fraction(0.03f)), new CornerRadii(rect.Fraction(0.06f)),
+                    Colors.Transparent, new Stroke(Colors.GreenYellow, rect.Fraction(0.06f)));
                 foreach (var square in _game.GetAvailableArrowTargets(selected))
                 {
                     canvas.DrawSprite(_textures, Piece.WhiteQueen, _boardNode.GetSquare(square), Color.FromARGB(0xFF888888));

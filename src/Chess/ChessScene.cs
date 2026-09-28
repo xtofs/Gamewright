@@ -96,7 +96,7 @@ public sealed class ChessScene : IScene
             canvas.DrawRectangle(rect, color);
             if (_board.TryGet(square, out var piece))
             {
-                canvas.DrawSprite(_sprites, piece, rect.Inset(5));
+                canvas.DrawSprite(_sprites, piece, rect.Inset(rect.Fraction(0.03f)));
             }
         }
         #endregion
@@ -105,7 +105,8 @@ public sealed class ChessScene : IScene
         if (_selectedSquare.HasValue)
         {
             var (rect, _) = _boardNode.GetSquareAndColor(_selectedSquare.Value);
-            canvas.DrawRoundedRectangle(rect.Inset(5), new CornerRadii(10), Colors.Transparent, new Stroke(Colors.Red, 10));
+            canvas.DrawRoundedRectangle(rect.Inset(rect.Fraction(0.03f)), new CornerRadii(rect.Fraction(0.06f)),
+                Colors.Transparent, new Stroke(Colors.Red, rect.Fraction(0.06f)));
         }
         #endregion
 

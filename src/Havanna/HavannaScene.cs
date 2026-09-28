@@ -114,7 +114,7 @@ public sealed class HavannaScene : IScene
         foreach (var path in _winningPaths)
         {
             var centers = path.Item2.Select(index => Layout.GetCenter(CubeCoord.FromIndex(index))).ToArray();
-            canvas.DrawSpline(centers, 12f, path.Item1);
+            canvas.DrawSpline(centers, Layout.HexagonRadius * 0.095f, path.Item1);
         }
 #if !SHOW_FPS
         var scale = MathF.Min(canvas.FramebufferSize.X, canvas.FramebufferSize.Y);
@@ -152,7 +152,9 @@ public sealed class HavannaScene : IScene
                 var fill = GetFillColor(hex);
                 var strokeColor = GetStrokeColor(hex);
                 var isSelected = _selectedHex == hex;
-                var stroke = isSelected ? new Stroke(Colors.HotPink, 9) : new Stroke(strokeColor, 3); ;
+                var stroke = isSelected
+                    ? new Stroke(Colors.HotPink, Layout.HexagonRadius * 0.07f)
+                    : new Stroke(strokeColor, Layout.HexagonRadius * 0.025f);
 
                 canvas.DrawPolygon(corners, fill: fill, stroke: stroke);
             }
@@ -175,7 +177,7 @@ public sealed class HavannaScene : IScene
                     var rect = new Rect(position, size);
 
                     // to debug the layout of the piece within the hexagon
-                    // canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, 1));
+                    // canvas.DrawRectangle(rect, stroke: new Stroke(Colors.Black, canvas.PixelsPerPoint));
 
                     rect = rect.Inset(0.05f * Layout.HexagonRadius);
                     canvas.DrawSprite(_spriteTextures, piece, rect);
@@ -188,7 +190,7 @@ public sealed class HavannaScene : IScene
             if (_selectedHex is { } selectedHex)
             {
                 var corners = Layout.GetHexCorners(selectedHex);
-                canvas.DrawPolygon(corners, stroke: new Stroke(Colors.LimeGreen, 24));
+                canvas.DrawPolygon(corners, stroke: new Stroke(Colors.LimeGreen, Layout.HexagonRadius * 0.19f));
             }
         }
     }

@@ -47,6 +47,13 @@ public sealed class Canvas : IDisposable
     internal GL GL => _gl;
     public Vector2 FramebufferSize => _viewport.FramebufferSize;
 
+    /// <summary>
+    /// Framebuffer pixels per logical window pixel, e.g. 2 on a Retina display. Multiply by it for sizes
+    /// that should look the same on every display instead of scaling with the layout, such as a hairline.
+    /// </summary>
+    public float PixelsPerPoint
+        => _viewport.WindowSize.X > 0 ? _viewport.FramebufferSize.X / _viewport.WindowSize.X : 1f;
+
     public void Begin(float delta)
     {
         _time += delta;
@@ -203,6 +210,7 @@ public sealed class Canvas : IDisposable
             throw new ArgumentOutOfRangeException(nameof(thickness), "Thickness must be positive.");
         }
 
+        (thickness, color) = GeometryBuilder.ClampToHairline(thickness, color);
         var headLength = thickness * 2.5f;
         var halfHeadWidth = thickness * 1.5f;
 

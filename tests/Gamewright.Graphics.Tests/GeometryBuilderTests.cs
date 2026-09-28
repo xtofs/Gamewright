@@ -118,4 +118,59 @@ public sealed class GeometryBuilderTests
 
         Assert.Equal(new Vector2(5, 5), piece.Control);
     }
+
+    [Fact]
+    public void CreateCapsule_WidensSubPixelLinesAndFadesThemByTheSameFactor()
+    {
+        var instance = GeometryBuilder.CreateCapsule(
+            Vector2.Zero, new Vector2(10, 0), 0.25f, Colors.White, new Stroke(Colors.White.WithAlpha(0.5f), 0.5f));
+
+        Assert.Equal(GeometryBuilder.MinimumWidth, instance.Thickness);
+        Assert.Equal(0.25f, instance.FillColor.W);
+        Assert.Equal(GeometryBuilder.MinimumWidth, instance.StrokeWidth);
+        Assert.Equal(0.25f, instance.StrokeColor.W);
+    }
+
+    [Fact]
+    public void CreateCapsule_KeepsLinesAtOrAboveTheMinimumWidth()
+    {
+        var instance = GeometryBuilder.CreateCapsule(Vector2.Zero, new Vector2(10, 0), 3, Colors.White, default);
+
+        Assert.Equal(3, instance.Thickness);
+        Assert.Equal(1, instance.FillColor.W);
+        Assert.Equal(0, instance.StrokeWidth);
+    }
+
+    [Fact]
+    public void CreateRoundedBox_WidensSubPixelStroke()
+    {
+        var instance = GeometryBuilder.CreateRoundedBox(
+            new Rect(0, 0, 10, 10), default, Colors.Transparent, new Stroke(Colors.Red, 0.5f));
+
+        Assert.Equal(GeometryBuilder.MinimumWidth, instance.StrokeWidth);
+        Assert.Equal(0.5f, instance.StrokeColor.W);
+    }
+
+    [Fact]
+    public void CreatePolyline_WidensSubPixelSegmentsAndJoinsAlike()
+    {
+        ReadOnlySpan<Vector2> points = [new Vector2(0, 0), new Vector2(10, 0), new Vector2(10, 10)];
+
+        var instances = GeometryBuilder.CreatePolyline(points, 0.5f, Colors.White);
+
+        Assert.All(instances.Segments, s => Assert.Equal((GeometryBuilder.MinimumWidth, 0.5f), (s.Thickness, s.FillColor.W)));
+        var join = Assert.Single(instances.Joins);
+        Assert.Equal(new Vector2(GeometryBuilder.MinimumWidth / 2), join.HalfExtent);
+        Assert.Equal(0.5f, join.FillColor.W);
+    }
+
+    [Fact]
+    public void CreateQuadraticBezier_WidensSubPixelCurves()
+    {
+        var instance = GeometryBuilder.CreateQuadraticBezier(
+            Vector2.Zero, new Vector2(5, 5), new Vector2(10, 0), 0.5f, Colors.White);
+
+        Assert.Equal(GeometryBuilder.MinimumWidth, instance.Thickness);
+        Assert.Equal(0.5f, instance.Color.W);
+    }
 }
