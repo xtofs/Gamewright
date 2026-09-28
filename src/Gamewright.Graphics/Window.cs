@@ -85,11 +85,19 @@ public sealed class Window : IDisposable
         var gl = GL.GetApi(_window);
         _canvas = new Canvas(gl, new SilkViewport(_window));
         var input = _window.CreateInput();
+
+        void Keyboard(IKeyboard _1, Key key, int _2) => Guarded(nameof(KeyDown), () => KeyDown?.Invoke(key));
         foreach (var kb in input.Keyboards)
-            kb.KeyDown += (_, key, _) => Guarded(nameof(KeyDown), () => KeyDown?.Invoke(key));
+        {
+            kb.KeyDown += Keyboard;
+        }
+
+        void MouseHandler(IMouse _, MouseButton btn) => Guarded(nameof(MouseDown), () => MouseDown?.Invoke(_canvas.WindowToFramebuffer(_.Position), btn));
         foreach (var mouse in input.Mice)
-            mouse.MouseDown += (m, btn) => Guarded(nameof(MouseDown), () =>
-                MouseDown?.Invoke(_canvas.WindowToFramebuffer(m.Position), btn));
+        {
+            mouse.MouseDown += MouseHandler;
+        }
+
         Load?.Invoke(new GraphicsDevice(gl));
     }
 
