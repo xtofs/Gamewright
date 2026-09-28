@@ -34,7 +34,8 @@ public sealed class Program : IDisposable
     private CubeCoord? _selectedHex = null;
 
     private Piece _currentPlayer = Piece.Red;
-
+    // cell indices of the connections that won, turned into screen positions each frame so they follow resizes
+    private List<(Color, IReadOnlyList<int>)> _winningPaths = [];
 
     public Program()
     {
@@ -77,22 +78,26 @@ public sealed class Program : IDisposable
             if (!_board.IsOccupied(hex))
             {
                 _board.Place(hex, _currentPlayer);
+                // _currentPlayer = _currentPlayer.Opponent;
+
                 var index = hex.GetIndex();
-
-#if DEBUG
-                Console.WriteLine(_regionTracker.FormatRegion(index));
-#endif
-
                 if (_regionTracker.HasBridge(index))
                 {
                     Console.WriteLine($"Bridge formed at index: {index}");
+                    _winningPaths = [
+                        .. _winningPaths,
+                        (Colors.GreenYellow, _regionTracker.FindBridgePath(index))
+                    ];
                 }
                 if (_regionTracker.HasFork(index))
                 {
                     Console.WriteLine($"Fork formed at index: {index}");
+                    _winningPaths = [
+                        .. _winningPaths,
+                        .. from path in _regionTracker.FindForkPaths(index) select (Colors.IndianRed, path)
+                    ];
                 }
 
-                _currentPlayer = _currentPlayer.Opponent;
             }
         }
         else
@@ -115,7 +120,6 @@ public sealed class Program : IDisposable
 
     private void OnRender(Canvas canvas, float deltaTime)
     {
-
         _root.Update(canvas.FramebufferSize);
         DrawGrid(canvas);
 
@@ -123,6 +127,11 @@ public sealed class Program : IDisposable
 
         DrawSelection(canvas);
 
+        foreach (var path in _winningPaths)
+        {
+            var centers = path.Item2.Select(index => Layout.GetCenter(CubeCoord.FromIndex(index))).ToArray();
+            canvas.DrawSpline(centers, 12f, path.Item1);
+        }
 #if !SHOW_FPS
         var scale = MathF.Min(canvas.FramebufferSize.X, canvas.FramebufferSize.Y);
         canvas.DrawText(_font, $"{1f / _window.FrameTime:f0}",

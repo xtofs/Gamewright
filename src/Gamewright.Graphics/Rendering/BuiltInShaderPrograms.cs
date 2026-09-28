@@ -5,7 +5,7 @@ using Silk.NET.OpenGL;
 
 internal sealed class BuiltInShaderPrograms : IDisposable
 {
-    private bool disposed;
+    private bool _disposed;
 
     public BuiltInShaderPrograms(GL gl)
     {
@@ -21,6 +21,12 @@ internal sealed class BuiltInShaderPrograms : IDisposable
             CapsuleShaderBindings.FragmentSource,
             CapsuleShaderBindings.FrameBlockName,
             CapsuleShaderBindings.FrameBinding);
+        QuadraticBezier = Create(
+            gl,
+            QuadraticBezierShaderBindings.VertexSource,
+            QuadraticBezierShaderBindings.FragmentSource,
+            QuadraticBezierShaderBindings.FrameBlockName,
+            QuadraticBezierShaderBindings.FrameBinding);
         Glyph = Create(
             gl,
             GlyphShaderBindings.VertexSource,
@@ -56,6 +62,8 @@ internal sealed class BuiltInShaderPrograms : IDisposable
 
     public ShaderProgram Capsule { get; }
 
+    public ShaderProgram QuadraticBezier { get; }
+
     public ShaderProgram Glyph { get; }
 
     public ShaderProgram Sprite { get; }
@@ -66,7 +74,7 @@ internal sealed class BuiltInShaderPrograms : IDisposable
 
     public void Dispose()
     {
-        if (disposed)
+        if (_disposed)
         {
             return;
         }
@@ -75,9 +83,10 @@ internal sealed class BuiltInShaderPrograms : IDisposable
         Arrow.Dispose();
         Sprite.Dispose();
         Glyph.Dispose();
+        QuadraticBezier.Dispose();
         Capsule.Dispose();
         RoundedBox.Dispose();
-        disposed = true;
+        _disposed = true;
     }
 
     private static ShaderProgram Create(

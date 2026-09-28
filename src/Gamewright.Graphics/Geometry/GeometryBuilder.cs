@@ -87,6 +87,65 @@ internal static class GeometryBuilder
 
         return new PolylineInstances(segments, joins);
     }
+
+    public static QuadraticBezierInstance CreateQuadraticBezier(
+        Vector2 start,
+        Vector2 control,
+        Vector2 end,
+        float thickness,
+        Color color)
+    {
+        // a collinear control point only changes the speed along a straight line;
+        // moving it to the middle makes the shader draw the piece as a plain segment
+        var chord = end - start;
+        var cross = chord.X * (control.Y - start.Y) - chord.Y * (control.X - start.X);
+        if (MathF.Abs(cross) <= 1e-4f * MathF.Max(chord.LengthSquared(), (control - start).LengthSquared()))
+        {
+            control = (start + end) * 0.5f;
+        }
+
+        return new QuadraticBezierInstance
+        {
+            Start = start,
+            Control = control,
+            End = end,
+            Thickness = thickness,
+            Color = color.Vector4,
+        };
+    }
+
+    /// <summary>
+    /// Splits the uniform quadratic B-spline of <paramref name="points"/>, with doubled end points,
+    /// into Bézier pieces: a line from the first point to the first midpoint, one curve per interior point
+    /// (from the previous midpoint, controlled by the point, to the next midpoint), and a line from the
+    /// last midpoint to the last point.
+    /// </summary>
+    public static IReadOnlyList<QuadraticBezierInstance> CreateSpline(ReadOnlySpan<Vector2> points, float thickness, Color color)
+    {
+        var pieces = new List<QuadraticBezierInstance>(Math.Max(0, points.Length));
+        if (points.Length < 2)
+        {
+            return pieces;
+        }
+
+        // the control polygon with the first and last point doubled
+        var control = new Vector2[points.Length + 2];
+        control[0] = points[0];
+        points.CopyTo(control.AsSpan(1));
+        control[^1] = points[^1];
+
+        for (var index = 1; index < control.Length - 1; index++)
+        {
+            var start = (control[index - 1] + control[index]) * 0.5f;
+            var end = (control[index] + control[index + 1]) * 0.5f;
+            if (start != end)
+            {
+                pieces.Add(CreateQuadraticBezier(start, control[index], end, thickness, color));
+            }
+        }
+
+        return pieces;
+    }
 }
 
 internal sealed record PolylineInstances(
@@ -113,6 +172,16 @@ internal struct CapsuleInstance
     public Vector4 FillColor;
     public Vector4 StrokeColor;
     public float StrokeWidth;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct QuadraticBezierInstance
+{
+    public Vector2 Start;
+    public Vector2 Control;
+    public Vector2 End;
+    public float Thickness;
+    public Vector4 Color;
 }
 
 [StructLayout(LayoutKind.Sequential)]

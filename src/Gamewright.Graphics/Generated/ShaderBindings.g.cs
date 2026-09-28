@@ -42,6 +42,63 @@ internal static class GlyphShaderBindings
     public const int FrameBinding = 0;
 }
 
+internal static class QuadraticBezierShaderBindings
+{
+    public const string VertexSource = """
+        #version 330 core
+        layout(std140) uniform Frame
+        {
+            mat4 projection;
+            vec2 viewportSize;
+            float time;
+        };
+
+        layout(location = 0) in vec2 unitPosition;
+        layout(location = 1) in vec2 startPoint;
+        layout(location = 2) in vec2 controlPoint;
+        layout(location = 3) in vec2 endPoint;
+        layout(location = 4) in float thickness;
+        layout(location = 5) in vec4 color;
+
+        out vec2 fragmentPosition;
+        out vec2 fragmentStart;
+        out vec2 fragmentControl;
+        out vec2 fragmentEnd;
+        out float fragmentRadius;
+        out vec4 fragmentColor;
+
+        void main()
+        {
+            // the curve lies inside the convex hull of its control points,
+            // so their bounding box grown by the radius (plus a pixel for antialiasing) covers the stroke
+            float radius = thickness * 0.5;
+            float expansion = radius + 1.0;
+            vec2 minimum = min(min(startPoint, controlPoint), endPoint) - expansion;
+            vec2 maximum = max(max(startPoint, controlPoint), endPoint) + expansion;
+            vec2 worldPosition = mix(minimum, maximum, unitPosition * 0.5 + 0.5);
+
+            fragmentPosition = worldPosition;
+            fragmentStart = startPoint;
+            fragmentControl = controlPoint;
+            fragmentEnd = endPoint;
+            fragmentRadius = radius;
+            fragmentColor = color;
+            gl_Position = projection * vec4(worldPosition, 0.0, 1.0);
+        }
+
+
+        """;
+    public const string FragmentSource = "#version 330 core\nfloat fillAlphaFromDistance(float distanceValue)\n{\n    float antialiasWidth = fwidth(distanceValue);\n    return 1.0 - smoothstep(-antialiasWidth, antialiasWidth, distanceValue);\n}\n\nfloat strokeAlphaFromDistance(float distanceValue, float strokeWidth)\n{\n    float antialiasWidth = fwidth(distanceValue);\n    float halfStrokeWidth = strokeWidth * 0.5;\n    return 1.0 - smoothstep(\n        halfStrokeWidth - antialiasWidth,\n        halfStrokeWidth \u002B antialiasWidth,\n        abs(distanceValue));\n}\n\nin vec2 fragmentPosition;\nin vec2 fragmentStart;\nin vec2 fragmentControl;\nin vec2 fragmentEnd;\nin float fragmentRadius;\nin vec4 fragmentColor;\n\nout vec4 outputColor;\n\nfloat lengthSquared(vec2 v)\n{\n    return dot(v, v);\n}\n\nfloat segmentDistance(vec2 position, vec2 a, vec2 b)\n{\n    vec2 ab = b - a;\n    float t = clamp(dot(position - a, ab) / max(dot(ab, ab), 1e-12), 0.0, 1.0);\n    return length(position - a - ab * t);\n}\n\n// Exact distance to the quadratic B\u00E9zier curve A-B-C (control point B), by solving the cubic\n// for the closest curve parameter in closed form. After Inigo Quilez, \u00222D distance functions\u0022.\nfloat bezierDistance(vec2 position, vec2 A, vec2 B, vec2 C)\n{\n    vec2 a = B - A;\n    vec2 b = A - 2.0 * B \u002B C;\n\n    // a straight piece has no quadratic term, and the cubic below would divide by ~0\n    if (lengthSquared(b) \u003C 1e-4 * lengthSquared(C - A))\n    {\n        return segmentDistance(position, A, C);\n    }\n\n    vec2 c = a * 2.0;\n    vec2 d = A - position;\n    float kk = 1.0 / dot(b, b);\n    float kx = kk * dot(a, b);\n    float ky = kk * (2.0 * dot(a, a) \u002B dot(d, b)) / 3.0;\n    float kz = kk * dot(d, a);\n    float p = ky - kx * kx;\n    float q = kx * (2.0 * kx * kx - 3.0 * ky) \u002B kz;\n    float h = q * q \u002B 4.0 * p * p * p;\n\n    float result;\n    if (h \u003E= 0.0)\n    {\n        // one real root\n        h = sqrt(h);\n        vec2 x = (vec2(h, -h) - q) / 2.0;\n        vec2 uv = sign(x) * pow(abs(x), vec2(1.0 / 3.0));\n        float t = clamp(uv.x \u002B uv.y - kx, 0.0, 1.0);\n        result = lengthSquared(d \u002B (c \u002B b * t) * t);\n    }\n    else\n    {\n        // three real roots; the third one is never the closest\n        float z = sqrt(-p);\n        float v = acos(q / (p * z * 2.0)) / 3.0;\n        float m = cos(v);\n        float n = sin(v) * 1.732050808;\n        vec2 t = clamp(vec2(m \u002B m, -n - m) * z - kx, 0.0, 1.0);\n        result = min(\n            lengthSquared(d \u002B (c \u002B b * t.x) * t.x),\n            lengthSquared(d \u002B (c \u002B b * t.y) * t.y));\n    }\n\n    return sqrt(result);\n}\n\nvoid main()\n{\n    float distanceValue = bezierDistance(fragmentPosition, fragmentStart, fragmentControl, fragmentEnd) - fragmentRadius;\n    vec4 color = fragmentColor;\n    color.a *= fillAlphaFromDistance(distanceValue);\n    outputColor = color;\n}\n\n";
+    public const int AttributeUnitPositionLocation = 0;
+    public const int AttributeStartPointLocation = 1;
+    public const int AttributeControlPointLocation = 2;
+    public const int AttributeEndPointLocation = 3;
+    public const int AttributeThicknessLocation = 4;
+    public const int AttributeColorLocation = 5;
+    public const string FrameBlockName = "Frame";
+    public const int FrameBinding = 0;
+}
+
 internal static class RoundedBoxShaderBindings
 {
     public const string VertexSource = "#version 330 core\nlayout(std140) uniform Frame\n{\n    mat4 projection;\n    vec2 viewportSize;\n    float time;\n};\n\nlayout(location = 0) in vec2 unitPosition;\nlayout(location = 1) in vec2 center;\nlayout(location = 2) in vec2 halfExtent;\nlayout(location = 3) in vec4 cornerRadii;\nlayout(location = 4) in vec4 fillColor;\nlayout(location = 5) in vec4 strokeColor;\nlayout(location = 6) in float strokeWidth;\n\nout vec2 fragmentPosition;\nout vec2 fragmentHalfExtent;\nout vec4 fragmentCornerRadii;\nout vec4 fragmentFillColor;\nout vec4 fragmentStrokeColor;\nout float fragmentStrokeWidth;\n\nvoid main()\n{\n    float expansion = strokeWidth * 0.5 \u002B 1.0;\n    vec2 expandedHalfExtent = halfExtent \u002B vec2(expansion);\n    fragmentPosition = unitPosition * expandedHalfExtent;\n    fragmentHalfExtent = halfExtent;\n    fragmentCornerRadii = cornerRadii;\n    fragmentFillColor = fillColor;\n    fragmentStrokeColor = strokeColor;\n    fragmentStrokeWidth = strokeWidth;\n    gl_Position = projection * vec4(center \u002B fragmentPosition, 0.0, 1.0);\n}\n\n";

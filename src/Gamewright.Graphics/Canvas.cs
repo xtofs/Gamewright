@@ -15,6 +15,7 @@ public sealed class Canvas : IDisposable
     private readonly FrameUniformBuffer _frameBuffer;
     private readonly InstanceBatch<RoundedBoxInstance> _roundedBoxes;
     private readonly InstanceBatch<CapsuleInstance> _capsules;
+    private readonly InstanceBatch<QuadraticBezierInstance> _beziers;
     private readonly InstanceBatch<TexturedQuadInstance> _texturedQuads;
     private readonly InstanceBatch<ArrowheadInstance> _arrowheads;
     private readonly InstanceBatch<ColoredTriangleInstance> _triangles;
@@ -37,6 +38,7 @@ public sealed class Canvas : IDisposable
         _frameBuffer = new FrameUniformBuffer(gl, RoundedBoxShaderBindings.FrameBinding);
         _roundedBoxes = new InstanceBatch<RoundedBoxInstance>(gl, RoundedBoxAttributes);
         _capsules = new InstanceBatch<CapsuleInstance>(gl, CapsuleAttributes);
+        _beziers = new InstanceBatch<QuadraticBezierInstance>(gl, QuadraticBezierAttributes);
         _texturedQuads = new InstanceBatch<TexturedQuadInstance>(gl, TexturedQuadAttributes);
         _arrowheads = new InstanceBatch<ArrowheadInstance>(gl, ArrowAttributes);
         _triangles = new InstanceBatch<ColoredTriangleInstance>(gl, TriangleAttributes);
@@ -147,6 +149,43 @@ public sealed class Canvas : IDisposable
             foreach (var join in instances.Joins)
             {
                 _roundedBoxes.Add(join);
+            }
+        }
+    }
+
+    /// <summary>Draws the quadratic Bézier curve from <paramref name="start"/> to <paramref name="end"/>, pulled towards <paramref name="control"/>.</summary>
+    public void DrawQuadraticBezier(Vector2 start, Vector2 control, Vector2 end, float thickness, Color color)
+    {
+        EnsureDrawing();
+        if (thickness <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(thickness), "Thickness must be positive.");
+        }
+
+        SwitchBatch(BatchKind.QuadraticBezier, null);
+        _beziers.Add(GeometryBuilder.CreateQuadraticBezier(start, control, end, thickness, color));
+    }
+
+    /// <summary>
+    /// Draws a smooth curve along the polygon through <paramref name="points"/>. The curve passes through
+    /// the first point, the midpoint of every segment of the polygon, and the last point, and is tangent
+    /// to the polygon at each midpoint. Where the polygon runs straight, so does the curve.
+    /// </summary>
+    public void DrawSpline(ReadOnlySpan<Vector2> points, float thickness, Color color)
+    {
+        EnsureDrawing();
+        if (thickness <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(thickness), "Thickness must be positive.");
+        }
+
+        var pieces = GeometryBuilder.CreateSpline(points, thickness, color);
+        if (pieces.Count > 0)
+        {
+            SwitchBatch(BatchKind.QuadraticBezier, null);
+            foreach (var piece in pieces)
+            {
+                _beziers.Add(piece);
             }
         }
     }
@@ -325,6 +364,7 @@ public sealed class Canvas : IDisposable
         _triangles.Dispose();
         _arrowheads.Dispose();
         _texturedQuads.Dispose();
+        _beziers.Dispose();
         _capsules.Dispose();
         _roundedBoxes.Dispose();
         _frameBuffer.Dispose();
@@ -350,6 +390,15 @@ public sealed class Canvas : IDisposable
         Attribute<CapsuleInstance>(CapsuleShaderBindings.AttributeFillColorLocation, 4, nameof(CapsuleInstance.FillColor)),
         Attribute<CapsuleInstance>(CapsuleShaderBindings.AttributeStrokeColorLocation, 4, nameof(CapsuleInstance.StrokeColor)),
         Attribute<CapsuleInstance>(CapsuleShaderBindings.AttributeStrokeWidthLocation, 1, nameof(CapsuleInstance.StrokeWidth)),
+    ];
+
+    private static IReadOnlyList<InstanceAttribute> QuadraticBezierAttributes { get; } =
+    [
+        Attribute<QuadraticBezierInstance>(QuadraticBezierShaderBindings.AttributeStartPointLocation, 2, nameof(QuadraticBezierInstance.Start)),
+        Attribute<QuadraticBezierInstance>(QuadraticBezierShaderBindings.AttributeControlPointLocation, 2, nameof(QuadraticBezierInstance.Control)),
+        Attribute<QuadraticBezierInstance>(QuadraticBezierShaderBindings.AttributeEndPointLocation, 2, nameof(QuadraticBezierInstance.End)),
+        Attribute<QuadraticBezierInstance>(QuadraticBezierShaderBindings.AttributeThicknessLocation, 1, nameof(QuadraticBezierInstance.Thickness)),
+        Attribute<QuadraticBezierInstance>(QuadraticBezierShaderBindings.AttributeColorLocation, 4, nameof(QuadraticBezierInstance.Color)),
     ];
 
     private static IReadOnlyList<InstanceAttribute> TexturedQuadAttributes { get; } =
@@ -422,6 +471,9 @@ public sealed class Canvas : IDisposable
             case BatchKind.Capsule:
                 _capsules.Draw(_programs.Capsule);
                 break;
+            case BatchKind.QuadraticBezier:
+                _beziers.Draw(_programs.QuadraticBezier);
+                break;
             case BatchKind.Glyph:
                 _activeTexture!.Bind();
                 _texturedQuads.Draw(_programs.Glyph);
@@ -466,6 +518,7 @@ public sealed class Canvas : IDisposable
         None,
         RoundedBox,
         Capsule,
+        QuadraticBezier,
         Glyph,
         Sprite,
         Arrow,

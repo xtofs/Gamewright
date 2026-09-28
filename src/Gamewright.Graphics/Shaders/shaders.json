@@ -24,6 +24,17 @@
             ]
         },
         {
+            "name": "QuadraticBezier",
+            "vertex": "quadratic-bezier.vert",
+            "fragment": "quadratic-bezier.frag",
+            "vertexIncludes": [
+                "common/frame.glsl"
+            ],
+            "fragmentIncludes": [
+                "common/alpha.glsl"
+            ]
+        },
+        {
             "name": "Glyph",
             "vertex": "textured-quad.vert",
             "fragment": "glyph.frag",
