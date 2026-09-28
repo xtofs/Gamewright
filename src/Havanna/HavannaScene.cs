@@ -31,7 +31,7 @@ public sealed class HavannaScene : IScene
 
     private HexLayout Layout => _boardNode.Layout;
 
-    private CubeCoord? _selectedHex = null;
+    private Coordinate? _selectedHex = null;
 
     private Piece _currentPlayer = Piece.Red;
 
@@ -113,7 +113,7 @@ public sealed class HavannaScene : IScene
 
         foreach (var path in _winningPaths)
         {
-            var centers = path.Item2.Select(index => Layout.GetCenter(CubeCoord.FromIndex(index))).ToArray();
+            var centers = path.Item2.Select(index => Layout.GetCenter(Coordinate.FromIndex(index))).ToArray();
             canvas.DrawSpline(centers, Layout.HexagonRadius * 0.095f, path.Item1);
         }
 #if !SHOW_FPS
@@ -122,7 +122,7 @@ public sealed class HavannaScene : IScene
             new System.Numerics.Vector2(scale * 0.01f, scale * 0.01f), Colors.Black);
 #endif
 
-        static Color GetFillColor(CubeCoord hex)
+        static Color GetFillColor(Coordinate hex)
         {
             return int.Mod(hex.Q - hex.R, 3) switch
             {
@@ -133,7 +133,7 @@ public sealed class HavannaScene : IScene
             };
         }
 
-        Color GetStrokeColor(CubeCoord hex)
+        Color GetStrokeColor(Coordinate hex)
         {
             return _board.GetKind(hex) switch
             {

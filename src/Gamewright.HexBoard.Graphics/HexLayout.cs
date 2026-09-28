@@ -57,14 +57,14 @@ public sealed class HexLayout(int radius)
     }
 
     /// <summary>Returns all hex coordinates in the grid.</summary>
-    public IEnumerable<CubeCoord> GetGrid() => CubeMath.CubeHexRegion(Radius);
+    public IEnumerable<Coordinate> GetGrid() => CubeMath.CubeHexRegion(Radius);
 
     /// <summary>Returns the screen position of the center of <paramref name="hex"/>.</summary>
-    public Vector2 GetCenter(CubeCoord hex) =>
+    public Vector2 GetCenter(Coordinate hex) =>
         Origin + HexagonRadius * new Vector2(Sqrt3 / 2 * (hex.Q - hex.R), -1.5f * hex.S);
 
     /// <summary>Returns the six screen-space corners of <paramref name="hex"/>.</summary>
-    public HexCorners GetHexCorners(CubeCoord hex)
+    public HexCorners GetHexCorners(Coordinate hex)
     {
         var center = GetCenter(hex);
         var corners = new HexCorners();
@@ -76,7 +76,7 @@ public sealed class HexLayout(int radius)
     }
 
     /// <summary>Returns the largest axis-aligned square inside <paramref name="hex"/>.</summary>
-    public (Vector2 Position, Vector2 Size) GetInscribedSquare(CubeCoord hex)
+    public (Vector2 Position, Vector2 Size) GetInscribedSquare(Coordinate hex)
     {
         var side = InscribedSquareSide;
         return (GetCenter(hex) - new Vector2(side / 2), new Vector2(side));
@@ -86,7 +86,7 @@ public sealed class HexLayout(int radius)
     /// Returns true if <paramref name="position"/> lies in a hexagon of the grid,
     /// and sets <paramref name="hex"/> to that hexagon.
     /// </summary>
-    public bool TryGetHex(Vector2 position, out CubeCoord hex)
+    public bool TryGetHex(Vector2 position, out Coordinate hex)
     {
         if (HexagonRadius < 1e-6f)
         {
@@ -105,7 +105,7 @@ public sealed class HexLayout(int radius)
     }
 
     /// <summary>Rounds fractional cube coordinates to the cube coordinate of the containing hexagon.</summary>
-    internal static CubeCoord CubeRound(float q, float r, float s)
+    internal static Coordinate CubeRound(float q, float r, float s)
     {
         var rq = (int)MathF.Round(q);
         var rr = (int)MathF.Round(r);
@@ -128,6 +128,6 @@ public sealed class HexLayout(int radius)
             rs = -rq - rr;
         }
 
-        return new CubeCoord(rq, rr, rs);
+        return new Coordinate(rq, rr, rs);
     }
 }

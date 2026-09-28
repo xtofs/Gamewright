@@ -23,7 +23,7 @@ public class HexGrid<T> where T : struct
     public int Count { get; }
 
     /// <summary>All coordinates of the grid.</summary>
-    public IEnumerable<CubeCoord> Coords => CubeMath.CubeHexRegion(Radius);
+    public IEnumerable<Coordinate> Coords => CubeMath.CubeHexRegion(Radius);
 
     public HexGrid(int radius)
     {
@@ -34,16 +34,16 @@ public class HexGrid<T> where T : struct
         _edgeMask = new ushort[Count];
         _cornerMask = new ushort[Count];
 
-        // foreach (var cube in CubeMath.CubeHexRegion(radius))
-        foreach (var (cube, index) in CubeMath.EnumerateGridCoords(radius))
+        // foreach (var hex in CubeMath.CubeHexRegion(radius))
+        foreach (var (hex, index) in CubeMath.EnumerateGridCoords(radius))
         {
-            if (cube.IsCorner(radius, out var corner))
+            if (hex.IsCorner(radius, out var corner))
             {
                 var bitIndex = (int)corner;
                 _cornerMask[index] |= (ushort)(1 << bitIndex);
             }
 
-            if (cube.IsEdge(radius, out var edge))
+            if (hex.IsEdge(radius, out var edge))
             {
                 var bitIndex = (int)edge;
                 _edgeMask[index] |= (ushort)(1 << bitIndex);
@@ -54,11 +54,11 @@ public class HexGrid<T> where T : struct
             _cells[index] = new Cell();
             var cell = _cells[index];
 
-            // neighbor slots are indexed by HexDirection, -1 marks a neighbor outside the grid
+            // neighbors outside the grid are left out
             ref var neighbors = ref _cells[index].Neighbors;
-            foreach (var direction in Enum.GetValues<HexDirection>())
+            foreach (var direction in Directions.All)
             {
-                var neighbor = cube.Neighbor(direction);
+                var neighbor = hex + direction;
                 if (neighbor.IsWithin(radius)) { neighbors.Add((short)neighbor.GetIndex()); }
             }
         }
@@ -105,11 +105,11 @@ public class HexGrid<T> where T : struct
                 var (pMin, pMax) = HexRowRange(grid.Radius, r);
                 for (var p = pMin; p <= pMax; p++)
                 {
-                    var cube = new CubeCoord(p, -(p + r), r);
-                    if (grid.Contains(cube))
+                    var hex = new Coordinate(p, -(p + r), r);
+                    if (grid.Contains(hex))
                     {
-                        span[cursor] = grid.TryGet(cube, out var piece) ? symbol(piece) : '.';
-                        var cellIndex = cube.GetIndex();
+                        span[cursor] = grid.TryGet(hex, out var piece) ? symbol(piece) : '.';
+                        var cellIndex = hex.GetIndex();
                         if (grid._edgeMask[cellIndex] != 0)
                         {
                             span[cursor] = int.TrailingZeroCount(grid._edgeMask[cellIndex]).ToString()[0];
@@ -143,22 +143,22 @@ public class HexGrid<T> where T : struct
         }
     }
 
-    /// <summary>The piece at <paramref name="cube"/>, or null if the cell is empty.</summary>
-    public T? this[CubeCoord cube] => TryGet(cube, out var piece) ? piece : null;
+    /// <summary>The piece at <paramref name="hex"/>, or null if the cell is empty.</summary>
+    public T? this[Coordinate hex] => TryGet(hex, out var piece) ? piece : null;
 
-    public bool IsOccupied(CubeCoord cube) => _cells[IndexOf(cube)].IsOccupied;
+    public bool IsOccupied(Coordinate hex) => _cells[IndexOf(hex)].IsOccupied;
 
-    public void Place(CubeCoord cube, T piece)
+    public void Place(Coordinate hex, T piece)
     {
-        ref var cell = ref _cells[IndexOf(cube)];
+        ref var cell = ref _cells[IndexOf(hex)];
         cell.IsOccupied = true;
         cell.Content = piece;
     }
 
-    /// <summary>Empties the cell at <paramref name="cube"/>. Returns false if it was already empty.</summary>
-    public bool Remove(CubeCoord cube)
+    /// <summary>Empties the cell at <paramref name="hex"/>. Returns false if it was already empty.</summary>
+    public bool Remove(Coordinate hex)
     {
-        ref var cell = ref _cells[IndexOf(cube)];
+        ref var cell = ref _cells[IndexOf(hex)];
         var wasOccupied = cell.IsOccupied;
         cell.IsOccupied = false;
         cell.Content = default;
@@ -166,7 +166,7 @@ public class HexGrid<T> where T : struct
     }
 
     /// <summary>Moves the piece at <paramref name="from"/> to <paramref name="to"/>, replacing whatever is there.</summary>
-    public void Move(CubeCoord from, CubeCoord to)
+    public void Move(Coordinate from, Coordinate to)
     {
         if (!TryGet(from, out var piece))
         {
@@ -176,10 +176,10 @@ public class HexGrid<T> where T : struct
         Place(to, piece);
     }
 
-    /// <summary>Returns true and the piece if <paramref name="cube"/> is in the grid and occupied.</summary>
-    public bool TryGet(CubeCoord cube, out T piece)
+    /// <summary>Returns true and the piece if <paramref name="hex"/> is in the grid and occupied.</summary>
+    public bool TryGet(Coordinate hex, out T piece)
     {
-        if (Contains(cube) && _cells[cube.GetIndex()] is { IsOccupied: true } cell)
+        if (Contains(hex) && _cells[hex.GetIndex()] is { IsOccupied: true } cell)
         {
             piece = cell.Content;
             return true;
@@ -188,9 +188,9 @@ public class HexGrid<T> where T : struct
         return false;
     }
 
-    private int IndexOf(CubeCoord cube) => Contains(cube)
-        ? cube.GetIndex()
-        : throw new ArgumentOutOfRangeException(nameof(cube), cube, $"Not within a grid of radius {Radius}.");
+    private int IndexOf(Coordinate hex) => Contains(hex)
+        ? hex.GetIndex()
+        : throw new ArgumentOutOfRangeException(nameof(hex), hex, $"Not within a grid of radius {Radius}.");
 
     /// <summary>Grid-geometry data for callers composing region/connectivity tracking on top of the grid.</summary>
     public ReadOnlySpan<short> Neighbors(int index) => _cells[index].Neighbors.AsReadOnlySpan();
@@ -202,8 +202,8 @@ public class HexGrid<T> where T : struct
     // {
     //     try
     //     {
-    //         var cube = new CubeCoord(q, r, s);
-    //         return TryGetCellContent(cube, out content);
+    //         var hex = new Coordinate(q, r, s);
+    //         return TryGetCellContent(hex, out content);
     //     }
     //     catch (ArgumentOutOfRangeException)
     //     {
@@ -212,23 +212,23 @@ public class HexGrid<T> where T : struct
     //     }
     // }
 
-    public bool Contains(CubeCoord cube) => cube.IsWithin(Radius);
+    public bool Contains(Coordinate hex) => hex.IsWithin(Radius);
 
-    public bool IsCorner(CubeCoord hex, [MaybeNullWhen(false)] out GridCornerDirection dir)
+    public bool IsCorner(Coordinate hex, [MaybeNullWhen(false)] out GridCornerDirection dir)
     {
         var ix = hex.GetIndex();
         dir = default!;
         return _cornerMask[ix] != 0;
     }
 
-    public bool IsEdge(CubeCoord hex, [MaybeNullWhen(false)] out GridEdgeDirection dir)
+    public bool IsEdge(Coordinate hex, [MaybeNullWhen(false)] out GridEdgeDirection dir)
     {
         var ix = hex.GetIndex();
         dir = default!;
         return _edgeMask[ix] != 0;
     }
 
-    public GridLocationKind GetKind(CubeCoord hex)
+    public GridLocationKind GetKind(Coordinate hex)
     {
         var ix = hex.GetIndex();
         var (c, e) = (_cornerMask[ix], _edgeMask[ix]);

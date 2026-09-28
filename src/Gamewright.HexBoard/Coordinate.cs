@@ -4,12 +4,18 @@ using System.Diagnostics.CodeAnalysis;
 
 
 /// <summary>
-/// hexagonal grid cube coordinates
-/// constraint Q + R + S = 0
+/// A hexagon on a circular hexagonal board, located relative to the <see cref="Center"/> hexagon.
 /// </summary>
-public readonly record struct CubeCoord
+/// <remarks>
+/// Stored as cube coordinates with Q + R + S = 0: +Q points east and +S points north.
+/// See <see cref="Direction"/> and <see cref="Offset"/> for Coordinate arithmetic.
+/// </remarks>
+public readonly record struct Coordinate
 {
-    public CubeCoord(int q, int r, int s)
+    /// <summary>The center hexagon of the board.</summary>
+    public static Coordinate Center { get; } = new(0, 0, 0);
+
+    public Coordinate(int q, int r, int s)
     {
         ArgumentOutOfRangeException.ThrowIfNotZero(q + r + s, "The sum of q, r, and s must be 0.");
         Q = (short)q;
@@ -22,14 +28,14 @@ public readonly record struct CubeCoord
     // S is derived from the constraint Q + R + S = 0
     public readonly short S => (short)(-(Q + R));
 
-    public static implicit operator (int Q, int R, int S)(CubeCoord value)
+    public static implicit operator (int Q, int R, int S)(Coordinate value)
     {
         return (value.Q, value.R, value.S);
     }
 
-    public static implicit operator CubeCoord((int Q, int R, int S) value)
+    public static implicit operator Coordinate((int Q, int R, int S) value)
     {
-        return new CubeCoord(value.Q, value.R, value.S);
+        return new Coordinate(value.Q, value.R, value.S);
     }
 
     public void Deconstruct(out int q, out int r, out int s)
@@ -40,7 +46,7 @@ public readonly record struct CubeCoord
     }
 
     /// <summary>
-    /// Returns the ring number of the cube, the distance from the center in a circular hexagonal grid.
+    /// Returns the ring number of the hexagon, its distance from the center in a circular hexagonal grid.
     /// </summary>
     /// <remarks>
     /// This is calculates from the maximum of the absolute values of the cube coordinates.
@@ -49,37 +55,9 @@ public readonly record struct CubeCoord
     public int Ring() => CubeMath.RingOfCube(Q, R, S);
 
     /// <summary>
-    /// Determines if the cube lies within a circular hexagonal grid with the given radius.
+    /// Determines if the hexagon lies within a circular hexagonal grid with the given radius.
     /// </summary>
     public bool IsWithin(int radius) => Ring() <= radius;
-
-    public static CubeCoord operator +(CubeCoord a, CubeCoord b) => new(a.Q + b.Q, a.R + b.R, a.S + b.S);
-
-    public static CubeCoord operator -(CubeCoord a, CubeCoord b) => new(a.Q - b.Q, a.R - b.R, a.S - b.S);
-
-    public static CubeCoord operator *(int k, CubeCoord c) => new(k * c.Q, k * c.R, k * c.S);
-
-    // indexed by HexDirection
-    private static readonly CubeCoord[] Offsets =
-    [
-        new(-1, 0, 1),  // NorthWest
-        new(0, -1, 1),  // NorthEast
-        new(1, -1, 0),  // East
-        new(1, 0, -1),  // SouthEast
-        new(0, 1, -1),  // SouthWest
-        new(-1, 1, 0),  // West
-    ];
-
-    /// <summary>
-    /// Returns the offset from a hexagon to its neighbor in the given direction.
-    /// </summary>
-    public static CubeCoord Offset(HexDirection direction) => Offsets[(int)direction];
-
-    /// <summary>
-    /// Returns the neighboring hexagon in the given direction.
-    /// </summary>
-    public CubeCoord Neighbor(HexDirection direction) => this + Offset(direction);
-
 
     /// <summary>
     /// Returns the index of the hexagon in a list or hexes of a circular hexagonal grid.
@@ -92,14 +70,14 @@ public readonly record struct CubeCoord
         return CubeMath.IndexFromCube(q, r, s);
     }
 
-    public static CubeCoord FromIndex(int index)
+    public static Coordinate FromIndex(int index)
     {
         CubeMath.CubeFromIndex(index, out var q, out var r, out var s);
-        return new CubeCoord(q, r, s);
+        return new Coordinate(q, r, s);
     }
 
     /// <summary>
-    /// Determines if the cube coordinate is a grid corner of the grid with the given radius.
+    /// Determines if the hexagon is a grid corner of the grid with the given radius.
     /// </summary>
     /// <param name="radius"></param>
     /// <param name="corner"></param>
@@ -143,7 +121,7 @@ public readonly record struct CubeCoord
     }
 
     /// <summary>
-    /// Determines if the cube is on an edge of the hexagonal grid with the given radius.
+    /// Determines if the hexagon is on an edge of the hexagonal grid with the given radius.
     /// </summary>
     /// <param name="radius"></param>
     /// <param name="edge"></param>

@@ -73,7 +73,7 @@ public class HexLayoutTests
     public void Corners_AreAtHexagonRadius_WithBottomVertexFirst()
     {
         var layout = CreateLayout(Vector2.Zero, new Vector2(1600, 1200));
-        var hex = new CubeCoord(2, -3, 1);
+        var hex = new Coordinate(2, -3, 1);
         var center = layout.GetCenter(hex);
         var corners = layout.GetHexCorners(hex);
 
@@ -91,11 +91,11 @@ public class HexLayoutTests
     public void Neighbors_AreOneHexagonWidthApart()
     {
         var layout = CreateLayout(Vector2.Zero, new Vector2(1600, 1200));
-        var hex = new CubeCoord(1, -2, 1);
+        var hex = new Coordinate(1, -2, 1);
 
-        foreach (var direction in Enum.GetValues<HexDirection>())
+        foreach (var direction in Directions.All)
         {
-            var distance = Vector2.Distance(layout.GetCenter(hex), layout.GetCenter(hex.Neighbor(direction)));
+            var distance = Vector2.Distance(layout.GetCenter(hex), layout.GetCenter(hex + direction));
             Assert.Equal(MathF.Sqrt(3) * layout.HexagonRadius, distance, Epsilon);
         }
     }
@@ -104,16 +104,16 @@ public class HexLayoutTests
     public void Directions_PointTheWayTheyAreNamed()
     {
         var layout = CreateLayout(Vector2.Zero, new Vector2(1600, 1200));
-        var origin = layout.GetCenter(new CubeCoord(0, 0, 0));
+        var origin = layout.GetCenter(Coordinate.Center);
 
-        Vector2 Step(HexDirection d) => layout.GetCenter(CubeCoord.Offset(d)) - origin;
+        Vector2 Step(Direction d) => layout.GetCenter(Coordinate.Center + d) - origin;
 
-        Assert.True(Step(HexDirection.East).X > 0 && MathF.Abs(Step(HexDirection.East).Y) < Epsilon);
-        Assert.True(Step(HexDirection.West).X < 0 && MathF.Abs(Step(HexDirection.West).Y) < Epsilon);
-        Assert.True(Step(HexDirection.NorthEast) is { X: > 0, Y: < 0 });
-        Assert.True(Step(HexDirection.NorthWest) is { X: < 0, Y: < 0 });
-        Assert.True(Step(HexDirection.SouthEast) is { X: > 0, Y: > 0 });
-        Assert.True(Step(HexDirection.SouthWest) is { X: < 0, Y: > 0 });
+        Assert.True(Step(Direction.East).X > 0 && MathF.Abs(Step(Direction.East).Y) < Epsilon);
+        Assert.True(Step(Direction.West).X < 0 && MathF.Abs(Step(Direction.West).Y) < Epsilon);
+        Assert.True(Step(Direction.NorthEast) is { X: > 0, Y: < 0 });
+        Assert.True(Step(Direction.NorthWest) is { X: < 0, Y: < 0 });
+        Assert.True(Step(Direction.SouthEast) is { X: > 0, Y: > 0 });
+        Assert.True(Step(Direction.SouthWest) is { X: < 0, Y: > 0 });
     }
 
     [Theory]
@@ -157,7 +157,7 @@ public class HexLayoutTests
     public void InscribedSquare_IsInsideHexagon()
     {
         var layout = CreateLayout(Vector2.Zero, new Vector2(1600, 1200));
-        var hex = new CubeCoord(-2, 3, -1);
+        var hex = new Coordinate(-2, 3, -1);
         var (position, size) = layout.GetInscribedSquare(hex);
 
         // shrink slightly: the square touches the hexagon's sides
@@ -178,6 +178,6 @@ public class HexLayoutTests
     [InlineData(-0.2f, 0.9f, -0.7f, 0, 1, -1)]
     public void CubeRound_RoundsToNearestHexagon(float q, float r, float s, int eq, int er, int es)
     {
-        Assert.Equal(new CubeCoord(eq, er, es), HexLayout.CubeRound(q, r, s));
+        Assert.Equal(new Coordinate(eq, er, es), HexLayout.CubeRound(q, r, s));
     }
 }

@@ -13,7 +13,7 @@ public sealed class HexBoardNode(int radius) : LeafNode
     public HexLayout Layout { get; } = new(radius);
 
     /// <inheritdoc cref="HexLayout.TryGetHex"/>
-    public bool TryGetHex(Vector2 position, out CubeCoord hex) => Layout.TryGetHex(position, out hex);
+    public bool TryGetHex(Vector2 position, out Coordinate hex) => Layout.TryGetHex(position, out hex);
 
     protected override Rect Compute(Rect parent)
     {

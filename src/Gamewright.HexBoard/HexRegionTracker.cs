@@ -12,7 +12,7 @@ public sealed class HexRegionTracker<TGroup>(HexGrid<TGroup> grid) where TGroup 
 
     public Region<TGroup> FindRegion(int index)
     {
-        if (!_grid.TryGet(CubeCoord.FromIndex(index), out var group))
+        if (!_grid.TryGet(Coordinate.FromIndex(index), out var group))
         {
             throw new InvalidOperationException($"Cell {index} is not occupied.");
         }
@@ -40,7 +40,7 @@ public sealed class HexRegionTracker<TGroup>(HexGrid<TGroup> grid) where TGroup 
                 }
 
                 visited[neighbor] = true;
-                if (_grid.TryGet(CubeCoord.FromIndex(neighbor), out var piece)
+                if (_grid.TryGet(Coordinate.FromIndex(neighbor), out var piece)
                     && EqualityComparer<TGroup>.Default.Equals(piece, group))
                 {
                     pending.Push(neighbor);
@@ -174,7 +174,7 @@ public sealed class HexRegionTracker<TGroup>(HexGrid<TGroup> grid) where TGroup 
         var members = region.Members.Order()
             .Select(member =>
             {
-                var coord = CubeCoord.FromIndex(member);
+                var coord = Coordinate.FromIndex(member);
                 return $"  {member} ({coord.Q},{coord.R},{coord.S}): group={region.Group}, edges=0x{_grid.EdgeMask(member):X2}, corners=0x{_grid.CornerMask(member):X2}";
             });
 

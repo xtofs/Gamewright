@@ -100,12 +100,12 @@ public static class CubeMath
     /// </summary>
     /// <param name="k"></param>
     /// <returns></returns>
-    public static IEnumerable<(CubeCoord, int)> EnumerateGridCoords(int k)
+    public static IEnumerable<(Coordinate, int)> EnumerateGridCoords(int k)
     {
         var n = NumberOfHexagonsInGrid(k);
         for (var i = 0; i < n; i++)
         {
-            var cube = CubeCoord.FromIndex(i);
+            var cube = Coordinate.FromIndex(i);
             yield return (cube, i);
         }
     }
@@ -116,14 +116,14 @@ public static class CubeMath
     /// </summary>
     /// <param name="R"></param>
     /// <returns></returns>
-    public static IEnumerable<CubeCoord> CubeHexRegion(int R)
+    public static IEnumerable<Coordinate> CubeHexRegion(int R)
     {
         for (var q = -R; q <= R; q++)
         {
             for (var r = Math.Max(-R, -q - R); r <= Math.Min(R, -q + R); r++)
             {
                 var s = -q - r;
-                yield return new CubeCoord(q, r, s);
+                yield return new Coordinate(q, r, s);
             }
         }
     }

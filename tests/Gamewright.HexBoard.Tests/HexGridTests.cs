@@ -1,48 +1,81 @@
 namespace Gamewright.HexBoard.Tests;
 
-public class HexDirectionTests
+public class DirectionTests
 {
-    public static TheoryData<HexDirection> Directions() => new(Enum.GetValues<HexDirection>());
+    public static TheoryData<Direction> AllDirections() => new(Directions.All);
 
     [Theory]
-    [MemberData(nameof(Directions))]
-    public void Offset_IsAdjacentToOrigin(HexDirection direction)
+    [MemberData(nameof(AllDirections))]
+    public void Offset_IsOneStep(Direction direction)
     {
-        var offset = CubeCoord.Offset(direction);
-
-        Assert.Equal(1, offset.Ring());
+        Assert.Equal(1, direction.ToOffset().Length);
     }
 
     [Theory]
-    [MemberData(nameof(Directions))]
-    public void Offset_OfOpposite_CancelsOut(HexDirection direction)
+    [MemberData(nameof(AllDirections))]
+    public void Offset_OfOpposite_CancelsOut(Direction direction)
     {
-        var sum = CubeCoord.Offset(direction) + CubeCoord.Offset(direction.Opposite());
+        var sum = direction.ToOffset() + direction.Opposite().ToOffset();
 
-        Assert.Equal(new CubeCoord(0, 0, 0), sum);
+        Assert.Equal(Offset.Zero, sum);
     }
 
     [Fact]
     public void Offsets_AreDistinct()
     {
-        var offsets = Enum.GetValues<HexDirection>().Select(CubeCoord.Offset).Distinct();
+        var offsets = Directions.All.Select(direction => direction.ToOffset()).Distinct();
 
         Assert.Equal(6, offsets.Count());
     }
 
     [Theory]
-    [MemberData(nameof(Directions))]
-    public void RadiusTimesOffset_IsTheCornerWithTheSameDirection(HexDirection direction)
+    [MemberData(nameof(AllDirections))]
+    public void RadiusStepsFromTheCenter_IsTheCornerWithTheSameDirection(Direction direction)
     {
         const int Radius = 4;
-        var cube = Radius * CubeCoord.Offset(direction);
+        var hex = Coordinate.Center + Radius * direction;
 
-        Assert.True(cube.IsCorner(Radius, out var corner));
+        Assert.True(hex.IsCorner(Radius, out var corner));
         Assert.Equal((GridCornerDirection)direction, corner);
     }
 }
 
-public class CubeCoordTests
+public class OffsetTests
+{
+    [Fact]
+    public void Difference_LeadsFromOneCoordinateToTheOther()
+    {
+        var from = new Coordinate(1, -2, 1);
+        var to = new Coordinate(-1, 2, -1);
+
+        Assert.Equal(to, from + (to - from));
+        Assert.Equal(from, to - (to - from));
+    }
+
+    [Fact]
+    public void Length_IsTheNumberOfStepsBetweenNeighbors()
+    {
+        var offset = 2 * Direction.East + 3 * Direction.SouthWest;
+
+        Assert.Equal(new Offset(2, 1, -3), offset);
+        Assert.Equal(3, offset.Length);
+    }
+
+    [Fact]
+    public void Negation_IsTheOppositeDirection()
+    {
+        Assert.Equal(Direction.West.ToOffset(), -Direction.East.ToOffset());
+        Assert.Equal(Coordinate.Center + Direction.West, Coordinate.Center - Direction.East);
+    }
+
+    [Fact]
+    public void Constructor_RejectsComponentsThatDoNotSumToZero()
+    {
+        Assert.Throws<ArgumentException>(() => new Offset(1, 1, 1));
+    }
+}
+
+public class CoordinateTests
 {
     [Theory]
     [InlineData(0, 0, 0, true)]
@@ -53,7 +86,7 @@ public class CubeCoordTests
     [InlineData(-2, -2, 4, false)]
     public void IsWithin_Radius3(int q, int r, int s, bool expected)
     {
-        Assert.Equal(expected, new CubeCoord(q, r, s).IsWithin(3));
+        Assert.Equal(expected, new Coordinate(q, r, s).IsWithin(3));
     }
 }
 
@@ -101,12 +134,12 @@ public class HexGridTests
     }
 
     [Fact]
-    public void Neighbors_MatchCubeNeighbor()
+    public void Neighbors_MatchCoordinatePlusDirection()
     {
         foreach (var (cube, index) in CubeMath.EnumerateGridCoords(Radius))
         {
-            var expected = Enum.GetValues<HexDirection>()
-                .Select(cube.Neighbor)
+            var expected = Directions.All
+                .Select(direction => cube + direction)
                 .Where(neighbor => neighbor.IsWithin(Radius))
                 .Select(neighbor => (short)neighbor.GetIndex())
                 .Order();
@@ -118,8 +151,8 @@ public class HexGridTests
     [Fact]
     public void Contains_MatchesTryGet()
     {
-        var inside = new CubeCoord(Radius, -Radius, 0);
-        var outside = new CubeCoord(Radius + 1, -Radius, -1);
+        var inside = new Coordinate(Radius, -Radius, 0);
+        var outside = new Coordinate(Radius + 1, -Radius, -1);
         _grid.Place(inside, Stone.X);
 
         Assert.True(_grid.Contains(inside));
@@ -132,13 +165,13 @@ public class HexGridTests
     public void NewGrid_IsEmpty()
     {
         Assert.All(_grid.Coords, cube => Assert.False(_grid.IsOccupied(cube)));
-        Assert.Null(_grid[new CubeCoord(0, 0, 0)]);
+        Assert.Null(_grid[new Coordinate(0, 0, 0)]);
     }
 
     [Fact]
     public void Place_ThenRemove_EmptiesTheCell()
     {
-        var cube = new CubeCoord(1, -1, 0);
+        var cube = new Coordinate(1, -1, 0);
 
         _grid.Place(cube, Stone.O);
         Assert.Equal(Stone.O, _grid[cube]);
@@ -151,7 +184,7 @@ public class HexGridTests
     [Fact]
     public void Place_DefaultValue_IsStillOccupied()
     {
-        var cube = new CubeCoord(0, 0, 0);
+        var cube = new Coordinate(0, 0, 0);
 
         _grid.Place(cube, default);
 
@@ -162,8 +195,8 @@ public class HexGridTests
     [Fact]
     public void Move_TransfersThePiece()
     {
-        var from = new CubeCoord(0, 0, 0);
-        var to = new CubeCoord(0, 1, -1);
+        var from = new Coordinate(0, 0, 0);
+        var to = new Coordinate(0, 1, -1);
         _grid.Place(from, Stone.O);
 
         _grid.Move(from, to);
@@ -175,7 +208,7 @@ public class HexGridTests
     [Fact]
     public void Place_OutsideTheGrid_Throws()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => _grid.Place(new CubeCoord(Radius + 1, -Radius, -1), Stone.X));
+        Assert.Throws<ArgumentOutOfRangeException>(() => _grid.Place(new Coordinate(Radius + 1, -Radius, -1), Stone.X));
     }
 
     [Fact]
@@ -187,7 +220,7 @@ public class HexGridTests
 
         Assert.Equal('.', Center());
 
-        grid.Place(new CubeCoord(0, 0, 0), Stone.O);
+        grid.Place(new Coordinate(0, 0, 0), Stone.O);
         Assert.Equal('O', Center());
     }
 
@@ -199,10 +232,10 @@ public class HexGridTests
         // the north edge is s == Radius, its corners are at q == -Radius and q == 0
         for (var q = -Radius + 1; q < 0; q++)
         {
-            _grid.Place(new CubeCoord(q, -q - Radius, Radius), Stone.X);
+            _grid.Place(new Coordinate(q, -q - Radius, Radius), Stone.X);
         }
 
-        var index = new CubeCoord(-1, 1 - Radius, Radius).GetIndex();
+        var index = new Coordinate(-1, 1 - Radius, Radius).GetIndex();
         Assert.Equal(1 << (int)GridEdgeDirection.North, tracker.EdgeMask(index));
         Assert.Equal(0, tracker.CornerMask(index));
     }
@@ -211,8 +244,8 @@ public class HexGridTests
     public void RegionTracker_DoesNotMergeDifferentGroups()
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
-        var a = new CubeCoord(-1, 1 - Radius, Radius);
-        var b = a.Neighbor(HexDirection.East);
+        var a = new Coordinate(-1, 1 - Radius, Radius);
+        var b = a + Direction.East;
 
         _grid.Place(a, Stone.X);
         _grid.Place(b, Stone.O);
@@ -227,8 +260,8 @@ public class HexGridTests
     public void RegionTracker_FormatRegion_ShowsMembersAndAggregateMasks()
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
-        var edge = new CubeCoord(-1, 1 - Radius, Radius);
-        var corner = edge.Neighbor(HexDirection.East);
+        var edge = new Coordinate(-1, 1 - Radius, Radius);
+        var corner = edge + Direction.East;
 
         _grid.Place(edge, Stone.X);
         _grid.Place(corner, Stone.X);
@@ -243,7 +276,7 @@ public class HexGridTests
     public void RegionTracker_FirstDefaultValuedPiece_HasOnlyOneMember()
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
-        var corner = new CubeCoord(-Radius, 0, Radius);
+        var corner = new Coordinate(-Radius, 0, Radius);
         _grid.Place(corner, Stone.X);
 
         Assert.Equal(1 << (int)GridCornerDirection.NorthWest, tracker.CornerMask(corner.GetIndex()));
@@ -257,13 +290,13 @@ public class HexGridTests
     public void RegionTracker_ConnectedCorners_FormBridge(Stone piece)
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
-        var firstCorner = new CubeCoord(-Radius, 0, Radius);
-        var lastCorner = new CubeCoord(0, -Radius, Radius);
+        var firstCorner = new Coordinate(-Radius, 0, Radius);
+        var lastCorner = new Coordinate(0, -Radius, Radius);
         _grid.Place(firstCorner, piece);
 
         for (var q = -Radius + 1; q < 0; q++)
         {
-            var edge = new CubeCoord(q, -q - Radius, Radius);
+            var edge = new Coordinate(q, -q - Radius, Radius);
             _grid.Place(edge, piece);
             Assert.False(tracker.HasBridge(edge.GetIndex()));
         }
@@ -274,7 +307,7 @@ public class HexGridTests
             (1 << (int)GridCornerDirection.NorthWest) | (1 << (int)GridCornerDirection.NorthEast),
             tracker.CornerMask(firstCorner.GetIndex()));
 
-        _grid.Remove(new CubeCoord(-2, 2 - Radius, Radius));
+        _grid.Remove(new Coordinate(-2, 2 - Radius, Radius));
         Assert.False(tracker.HasBridge(firstCorner.GetIndex()));
         Assert.False(tracker.HasBridge(lastCorner.GetIndex()));
     }
@@ -285,31 +318,31 @@ public class HexGridTests
         var tracker = new HexRegionTracker<Stone>(_grid);
         for (var q = -Radius; q <= 0; q++)
         {
-            _grid.Place(new CubeCoord(q, -q - Radius, Radius), q == -2 ? Stone.O : Stone.X);
+            _grid.Place(new Coordinate(q, -q - Radius, Radius), q == -2 ? Stone.O : Stone.X);
         }
 
-        Assert.False(tracker.HasBridge(new CubeCoord(-Radius, 0, Radius).GetIndex()));
-        Assert.False(tracker.HasBridge(new CubeCoord(0, -Radius, Radius).GetIndex()));
+        Assert.False(tracker.HasBridge(new Coordinate(-Radius, 0, Radius).GetIndex()));
+        Assert.False(tracker.HasBridge(new Coordinate(0, -Radius, Radius).GetIndex()));
     }
 
     [Fact]
     public void RegionTracker_ThreeDistinctEdges_FormFork()
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
-        var center = new CubeCoord(0, 0, 0);
+        var center = new Coordinate(0, 0, 0);
         _grid.Place(center, Stone.X);
 
         for (var distance = 1; distance <= Radius; distance++)
         {
-            _grid.Place(new CubeCoord(-1, 1 - distance, distance), Stone.X);
-            _grid.Place(new CubeCoord(1, -distance, distance - 1), Stone.X);
+            _grid.Place(new Coordinate(-1, 1 - distance, distance), Stone.X);
+            _grid.Place(new Coordinate(1, -distance, distance - 1), Stone.X);
         }
 
         Assert.False(tracker.HasFork(center.GetIndex()));
 
         for (var distance = 1; distance <= Radius; distance++)
         {
-            _grid.Place(new CubeCoord(-distance, 1, distance - 1), Stone.X);
+            _grid.Place(new Coordinate(-distance, 1, distance - 1), Stone.X);
         }
 
         Assert.True(tracker.HasFork(center.GetIndex()));
@@ -321,7 +354,7 @@ public class HexGridTests
     {
         var tracker = new HexRegionTracker<Stone>(_grid);
 
-        Assert.Throws<InvalidOperationException>(() => tracker.HasBridge(new CubeCoord(0, 0, 0).GetIndex()));
+        Assert.Throws<InvalidOperationException>(() => tracker.HasBridge(new Coordinate(0, 0, 0).GetIndex()));
     }
 
     public enum Stone

@@ -8,7 +8,7 @@ public class HexRegionTrackerTests
     public void FindBridgePath_FollowsTheBoardSideBetweenTwoCorners()
     {
         var grid = new HexGrid<int>(Radius);
-        var side = BoardSide(HexDirection.NorthWest, HexDirection.NorthEast);
+        var side = BoardSide(Direction.NorthWest, Direction.NorthEast);
         foreach (var cell in side)
         {
             grid.Place(cell, 1);
@@ -23,14 +23,14 @@ public class HexRegionTrackerTests
     public void FindBridgePath_SkipsCellsOffTheShortestPath()
     {
         var grid = new HexGrid<int>(Radius);
-        var side = BoardSide(HexDirection.NorthWest, HexDirection.NorthEast);
+        var side = BoardSide(Direction.NorthWest, Direction.NorthEast);
         foreach (var cell in side)
         {
             grid.Place(cell, 1);
         }
 
         // a dead end hanging off the middle of the bridge towards the board center
-        var blob = new[] { side[1] + CubeCoord.Offset(HexDirection.SouthEast), side[1] + 2 * CubeCoord.Offset(HexDirection.SouthEast) };
+        var blob = new[] { side[1] + Direction.SouthEast, side[1] + 2 * Direction.SouthEast };
         foreach (var cell in blob)
         {
             grid.Place(cell, 1);
@@ -45,21 +45,20 @@ public class HexRegionTrackerTests
     public void FindForkPaths_BranchesFromTheJunctionToThreeDistinctEdges()
     {
         var grid = new HexGrid<int>(Radius);
-        var center = new CubeCoord(0, 0, 0);
+        var center = Coordinate.Center;
         grid.Place(center, 1);
 
         // three spokes from the center, each bending to end on a board edge (not a corner)
         foreach (var (outward, along) in new[]
         {
-            (HexDirection.NorthWest, HexDirection.NorthEast),
-            (HexDirection.East, HexDirection.SouthEast),
-            (HexDirection.SouthWest, HexDirection.West),
+            (Direction.NorthWest, Direction.NorthEast),
+            (Direction.East, Direction.SouthEast),
+            (Direction.SouthWest, Direction.West),
         })
         {
-            var direction = CubeCoord.Offset(outward);
-            grid.Place(direction, 1);
-            grid.Place(2 * direction, 1);
-            grid.Place(2 * direction + CubeCoord.Offset(along), 1);
+            grid.Place(center + outward, 1);
+            grid.Place(center + 2 * outward, 1);
+            grid.Place(center + 2 * outward + along, 1);
         }
 
         var tracker = new HexRegionTracker<int>(grid);
@@ -76,10 +75,10 @@ public class HexRegionTrackerTests
     }
 
     /// <summary>The cells of the board side from the corner in direction <paramref name="from"/> to the adjacent corner <paramref name="to"/>.</summary>
-    private static CubeCoord[] BoardSide(HexDirection from, HexDirection to)
+    private static Coordinate[] BoardSide(Direction from, Direction to)
     {
-        var start = Radius * CubeCoord.Offset(from);
-        var step = CubeCoord.Offset(to) - CubeCoord.Offset(from);
+        var start = Coordinate.Center + Radius * from;
+        var step = to.ToOffset() - from.ToOffset();
         return [.. Enumerable.Range(0, Radius + 1).Select(k => start + k * step)];
     }
 
@@ -87,8 +86,8 @@ public class HexRegionTrackerTests
     {
         for (var i = 1; i < path.Count; i++)
         {
-            var delta = CubeCoord.FromIndex(path[i]) - CubeCoord.FromIndex(path[i - 1]);
-            Assert.Equal(1, delta.Ring());
+            var delta = Coordinate.FromIndex(path[i]) - Coordinate.FromIndex(path[i - 1]);
+            Assert.Equal(1, delta.Length);
         }
     }
 }
