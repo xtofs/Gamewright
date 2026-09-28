@@ -10,6 +10,9 @@
     <Project Path="src/Amazons/Amazons.csproj" />
     <Project Path="src/Chess/Chess.csproj" />
   </Folder>
+  <Folder Name="/spikes/">
+    <Project Path="src/Spikes/HotReloadSpike/HotReloadSpike.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CodeGen.Tests/CodeGen.Tests.csproj" />
     <Project Path="tests/Gamewright.Graphics.Tests/Gamewright.Graphics.Tests.csproj" />
@@ -17,5 +20,6 @@
     <Project Path="tests/Gamewright.HexBoard.Graphics.Tests/Gamewright.HexBoard.Graphics.Tests.csproj" />
     <Project Path="tests/Gamewright.SquareBoard.Tests/Gamewright.SquareBoard.Tests.csproj" />
     <Project Path="tests/Gamewright.SquareBoard.Graphics.Tests/Gamewright.SquareBoard.Graphics.Tests.csproj" />
+    <Project Path="tests/HotReloadSpike.Tests/HotReloadSpike.Tests.csproj" />
   </Folder>
 </Solution>

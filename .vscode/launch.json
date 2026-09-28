@@ -9,6 +9,12 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/src/Havanna/Havanna.csproj"
+        },
+        {
+            "name": "C#: HotReloadSpike Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/Spikes/HotReloadSpike/HotReloadSpike.csproj"
         }
     ]
 }
