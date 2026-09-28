@@ -12,21 +12,9 @@ public readonly record struct Coordinate(int Column, int Row)
 
     public static Coordinate operator *(int k, Coordinate a) => new(k * a.Column, k * a.Row);
 
-    /// <summary>The offset of one step in <paramref name="direction"/>.</summary>
-    public static Coordinate Offset(Direction direction) => direction switch
-    {
-        Direction.North => new(0, 1),
-        Direction.NorthEast => new(1, 1),
-        Direction.East => new(1, 0),
-        Direction.SouthEast => new(1, -1),
-        Direction.South => new(0, -1),
-        Direction.SouthWest => new(-1, -1),
-        Direction.West => new(-1, 0),
-        Direction.NorthWest => new(-1, 1),
-        _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null),
-    };
 
-    public Coordinate Neighbor(Direction direction) => this + direction.ToOffset();
+    // [Obsolete("Use the '+' operator with Direction.ToOffset() instead.")]
+    // public Coordinate Neighbor(Direction direction) => this + direction.ToOffset();
 
     public override string ToString() => $"({Column}, {Row})";
 }

@@ -90,7 +90,7 @@ public class CheckerBoard<T> where T : struct
     /// </summary>
     public IEnumerable<Coordinate> Ray(Coordinate from, Direction direction)
     {
-        for (var square = from.Neighbor(direction); IsValid(square); square = square.Neighbor(direction))
+        for (var square = from + direction; IsValid(square); square = square + direction)
         {
             yield return square;
         }

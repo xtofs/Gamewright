@@ -2,15 +2,24 @@ namespace Gamewright.SquareBoard.Tests;
 
 public class SquareDirectionTests
 {
-    public static TheoryData<Direction> Directions() => new(Enum.GetValues<Direction>());
+    public static TheoryData<Direction> AllDirections() => new(Enum.GetValues<Direction>());
 
     [Theory]
-    [MemberData(nameof(Directions))]
+    [MemberData(nameof(AllDirections))]
     public void Offset_OfOpposite_CancelsOut(Direction direction)
     {
-        var sum = Coordinate.Offset(direction) + Coordinate.Offset(direction.Opposite());
+        var sum = direction.ToOffset() + direction.Opposite().ToOffset();
 
-        Assert.Equal(new Coordinate(0, 0), sum);
+        Assert.Equal(new Offset(0, 0), sum);
+    }
+
+    [Fact]
+    public void North_DecreasesRow_And_East_IncreasesColumn()
+    {
+        var square = new Coordinate(3, 3);
+
+        Assert.Equal(new Coordinate(3, 2), square + Direction.North);
+        Assert.Equal(new Coordinate(4, 3), square + Direction.East);
     }
 
     [Fact]
@@ -30,7 +39,7 @@ public class SquareGridTests
     public void Coords_CoverEverySquareOnce()
     {
         Assert.Equal(48, _grid.Coords.Distinct().Count());
-        Assert.All(_grid.Coords, square => Assert.True(_grid.Contains(square)));
+        Assert.All(_grid.Coords, square => Assert.True(_grid.IsValid(square)));
     }
 
     [Theory]
@@ -38,11 +47,11 @@ public class SquareGridTests
     [InlineData(0, -1)]
     [InlineData(8, 0)]
     [InlineData(0, 6)]
-    public void Contains_IsFalseOutsideTheGrid(int file, int rank)
+    public void IsValid_IsFalseOutsideTheGrid(int file, int rank)
     {
         var square = new Coordinate(file, rank);
 
-        Assert.False(_grid.Contains(square));
+        Assert.False(_grid.IsValid(square));
         Assert.False(_grid.TryGet(square, out _));
         Assert.Throws<ArgumentOutOfRangeException>(() => _grid.Place(square, Stone.X));
     }
@@ -93,7 +102,7 @@ public class SquareGridTests
     [Fact]
     public void Ray_StopsAtTheEdge()
     {
-        var ray = _grid.Ray(new Coordinate(1, 1), Direction.NorthEast);
+        var ray = _grid.Ray(new Coordinate(1, 1), Direction.SouthEast);
 
         Assert.Equal([new(2, 2), new(3, 3), new(4, 4), new(5, 5)], ray);
     }
