@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Dandan/Dandan.csproj" />
     <Project Path="src/Gamewright.Graphics/Gamewright.Graphics.csproj" />
     <Project Path="src/Gamewright.HexBoard/Gamewright.HexBoard.csproj" />
     <Project Path="src/Gamewright.HexBoard.Graphics/Gamewright.HexBoard.Graphics.csproj" />

@@ -286,20 +286,22 @@ public sealed class Canvas : IDisposable
         Texture2D texture,
         Rect destination,
         TextureRegion? source = null,
-        Color? tint = null)
+        Color? tint = null,
+        float rotationRadians = 0)
     {
-        DrawTexturedQuad(BatchKind.Sprite, texture, destination, source ?? TextureRegion.Full, tint ?? Colors.White);
+        DrawTexturedQuad(BatchKind.Sprite, texture, destination, source ?? TextureRegion.Full, tint ?? Colors.White, rotationRadians);
     }
 
     public void DrawSprite<TKey>(
         TextureAtlas<TKey> atlas,
         TKey key,
         Rect destination,
-        Color? tint = null)
+        Color? tint = null,
+        float rotationRadians = 0)
         where TKey : notnull
     {
         ArgumentNullException.ThrowIfNull(atlas);
-        DrawTexturedQuad(BatchKind.Sprite, atlas.Texture, destination, atlas[key], tint ?? Colors.White);
+        DrawTexturedQuad(BatchKind.Sprite, atlas.Texture, destination, atlas[key], tint ?? Colors.White, rotationRadians);
     }
 
     public void DrawGlyph(Texture2D atlas, Rect destination, TextureRegion source, Color tint)
@@ -414,6 +416,7 @@ public sealed class Canvas : IDisposable
         Attribute<TexturedQuadInstance>(SpriteShaderBindings.AttributeDestinationLocation, 4, nameof(TexturedQuadInstance.Destination)),
         Attribute<TexturedQuadInstance>(SpriteShaderBindings.AttributeUvRectangleLocation, 4, nameof(TexturedQuadInstance.UvRectangle)),
         Attribute<TexturedQuadInstance>(SpriteShaderBindings.AttributeTintLocation, 4, nameof(TexturedQuadInstance.Tint)),
+        Attribute<TexturedQuadInstance>(SpriteShaderBindings.AttributeRotationRadiansLocation, 1, nameof(TexturedQuadInstance.RotationRadians)),
     ];
 
     private static IReadOnlyList<InstanceAttribute> TriangleAttributes { get; } =
@@ -443,7 +446,8 @@ public sealed class Canvas : IDisposable
         Texture2D texture,
         Rect destination,
         TextureRegion source,
-        Color tint)
+        Color tint,
+        float rotationRadians = 0)
     {
         EnsureDrawing();
         ArgumentNullException.ThrowIfNull(texture);
@@ -454,6 +458,7 @@ public sealed class Canvas : IDisposable
             Destination = new Vector4(destination.X, destination.Y, destination.Width, destination.Height),
             UvRectangle = new Vector4(source.Minimum.X, source.Minimum.Y, source.Maximum.X, source.Maximum.Y),
             Tint = tint.Vector4,
+            RotationRadians = rotationRadians,
         });
     }
 

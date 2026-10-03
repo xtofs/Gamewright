@@ -209,6 +209,7 @@ internal struct TexturedQuadInstance
     public Vector4 Destination;
     public Vector4 UvRectangle;
     public Vector4 Tint;
+    public float RotationRadians;
 }
 
 [StructLayout(LayoutKind.Sequential)]

@@ -31,12 +31,13 @@ internal static class CapsuleShaderBindings
 
 internal static class GlyphShaderBindings
 {
-    public const string VertexSource = "#version 330 core\nlayout(std140) uniform Frame\n{\n    mat4 projection;\n    vec2 viewportSize;\n    float time;\n};\n\nlayout(location = 0) in vec2 unitPosition;\nlayout(location = 1) in vec4 destination;\nlayout(location = 2) in vec4 uvRectangle;\nlayout(location = 3) in vec4 tint;\n\nout vec2 fragmentUv;\nout vec4 fragmentTint;\n\nvoid main()\n{\n    vec2 normalizedPosition = unitPosition * 0.5 \u002B 0.5;\n    vec2 worldPosition = destination.xy \u002B normalizedPosition * destination.zw;\n    fragmentUv = mix(uvRectangle.xy, uvRectangle.zw, normalizedPosition);\n    fragmentTint = tint;\n    gl_Position = projection * vec4(worldPosition, 0.0, 1.0);\n}\n\n";
+    public const string VertexSource = "#version 330 core\nlayout(std140) uniform Frame\n{\n    mat4 projection;\n    vec2 viewportSize;\n    float time;\n};\n\nlayout(location = 0) in vec2 unitPosition;\nlayout(location = 1) in vec4 destination;\nlayout(location = 2) in vec4 uvRectangle;\nlayout(location = 3) in vec4 tint;\nlayout(location = 4) in float rotationRadians;\n\nout vec2 fragmentUv;\nout vec4 fragmentTint;\n\nvoid main()\n{\n    vec2 normalizedPosition = unitPosition * 0.5 \u002B 0.5;\n    vec2 localPosition = (normalizedPosition - vec2(0.5)) * destination.zw;\n    float cosine = cos(rotationRadians);\n    float sine = sin(rotationRadians);\n    vec2 rotatedPosition = vec2(\n        cosine * localPosition.x - sine * localPosition.y,\n        sine * localPosition.x \u002B cosine * localPosition.y);\n    vec2 worldPosition = destination.xy \u002B destination.zw * 0.5 \u002B rotatedPosition;\n    fragmentUv = mix(uvRectangle.xy, uvRectangle.zw, normalizedPosition);\n    fragmentTint = tint;\n    gl_Position = projection * vec4(worldPosition, 0.0, 1.0);\n}\n\n";
     public const string FragmentSource = "#version 330 core\n\nin vec2 fragmentUv;\nin vec4 fragmentTint;\n\nuniform sampler2D atlas;\n\nout vec4 outputColor;\n\nvoid main()\n{\n    float coverage = texture(atlas, fragmentUv).a;\n    outputColor = vec4(fragmentTint.rgb, fragmentTint.a * coverage);\n}\n\n";
     public const int AttributeUnitPositionLocation = 0;
     public const int AttributeDestinationLocation = 1;
     public const int AttributeUvRectangleLocation = 2;
     public const int AttributeTintLocation = 3;
+    public const int AttributeRotationRadiansLocation = 4;
     public const string UniformAtlasName = "atlas";
     public const string FrameBlockName = "Frame";
     public const int FrameBinding = 0;
@@ -73,12 +74,13 @@ internal static class RoundedBoxShaderBindings
 
 internal static class SpriteShaderBindings
 {
-    public const string VertexSource = "#version 330 core\nlayout(std140) uniform Frame\n{\n    mat4 projection;\n    vec2 viewportSize;\n    float time;\n};\n\nlayout(location = 0) in vec2 unitPosition;\nlayout(location = 1) in vec4 destination;\nlayout(location = 2) in vec4 uvRectangle;\nlayout(location = 3) in vec4 tint;\n\nout vec2 fragmentUv;\nout vec4 fragmentTint;\n\nvoid main()\n{\n    vec2 normalizedPosition = unitPosition * 0.5 \u002B 0.5;\n    vec2 worldPosition = destination.xy \u002B normalizedPosition * destination.zw;\n    fragmentUv = mix(uvRectangle.xy, uvRectangle.zw, normalizedPosition);\n    fragmentTint = tint;\n    gl_Position = projection * vec4(worldPosition, 0.0, 1.0);\n}\n\n";
+    public const string VertexSource = "#version 330 core\nlayout(std140) uniform Frame\n{\n    mat4 projection;\n    vec2 viewportSize;\n    float time;\n};\n\nlayout(location = 0) in vec2 unitPosition;\nlayout(location = 1) in vec4 destination;\nlayout(location = 2) in vec4 uvRectangle;\nlayout(location = 3) in vec4 tint;\nlayout(location = 4) in float rotationRadians;\n\nout vec2 fragmentUv;\nout vec4 fragmentTint;\n\nvoid main()\n{\n    vec2 normalizedPosition = unitPosition * 0.5 \u002B 0.5;\n    vec2 localPosition = (normalizedPosition - vec2(0.5)) * destination.zw;\n    float cosine = cos(rotationRadians);\n    float sine = sin(rotationRadians);\n    vec2 rotatedPosition = vec2(\n        cosine * localPosition.x - sine * localPosition.y,\n        sine * localPosition.x \u002B cosine * localPosition.y);\n    vec2 worldPosition = destination.xy \u002B destination.zw * 0.5 \u002B rotatedPosition;\n    fragmentUv = mix(uvRectangle.xy, uvRectangle.zw, normalizedPosition);\n    fragmentTint = tint;\n    gl_Position = projection * vec4(worldPosition, 0.0, 1.0);\n}\n\n";
     public const string FragmentSource = "#version 330 core\n\nin vec2 fragmentUv;\nin vec4 fragmentTint;\n\nuniform sampler2D atlas;\n\nout vec4 outputColor;\n\nvoid main()\n{\n    outputColor = texture(atlas, fragmentUv) * fragmentTint;\n}\n\n";
     public const int AttributeUnitPositionLocation = 0;
     public const int AttributeDestinationLocation = 1;
     public const int AttributeUvRectangleLocation = 2;
     public const int AttributeTintLocation = 3;
+    public const int AttributeRotationRadiansLocation = 4;
     public const string UniformAtlasName = "atlas";
     public const string FrameBlockName = "Frame";
     public const int FrameBinding = 0;
