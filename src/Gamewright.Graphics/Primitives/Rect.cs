@@ -19,6 +19,11 @@ public readonly record struct Rect(float X, float Y, float Width, float Height)
 
     public Vector2 Center => new Vector2(X + Width / 2, Y + Height / 2);
 
+    public static Rect FromCenter(Vector2 center, Vector2 cardSize)
+    {
+        return new Rect(center - cardSize / 2, cardSize);
+    }
+
     public static Rect operator +(Rect rect, Vector2 offset)
         => new(rect.X + offset.X, rect.Y + offset.Y, rect.Width, rect.Height);
 }

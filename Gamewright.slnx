@@ -12,6 +12,7 @@
     <Project Path="src/Chess/Chess.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Dandan.Tests/Dandan.Tests.csproj" />
     <Project Path="tests/CodeGen.Tests/CodeGen.Tests.csproj" />
     <Project Path="tests/Gamewright.Graphics.Tests/Gamewright.Graphics.Tests.csproj" />
     <Project Path="tests/Gamewright.HexBoard.Tests/Gamewright.HexBoard.Tests.csproj" />
