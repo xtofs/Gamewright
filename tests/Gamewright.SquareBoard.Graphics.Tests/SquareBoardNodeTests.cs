@@ -8,10 +8,10 @@ public class SquareBoardNodeTests
     // 8 squares of 4 units plus two borders of 1 unit = 34 units, 10 px each
     private static readonly Vector2 Size = new(340, 340);
 
-    private static SquareBoardNode CreateBoard(Vector2 size, bool withLabels = true)
+    private static CheckerboardNode CreateBoard(Vector2 size, bool withLabels = true)
     {
         var root = new RootNode();
-        var board = root.AddSquareBoard(8, 8, withLabels);
+        var board = root.AddCheckerboard(8, 8, withLabels);
         root.Update(size);
         return board;
     }

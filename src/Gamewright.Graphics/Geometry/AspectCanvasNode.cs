@@ -15,7 +15,7 @@ public sealed class AspectCanvasNode : SingleChildNode
         _insetFraction = insetFraction;
     }
 
-    protected override Rect Compute(Rect parent)
+    protected override Rect Layout(Rect parent)
     {
         var scale = MathF.Min(parent.Width, parent.Height);
         return parent.Inset(scale * _insetFraction).GetMaxOfRatio(_ratio);

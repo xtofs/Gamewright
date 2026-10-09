@@ -7,5 +7,5 @@ public sealed class InsetNode : SingleChildNode
 
     internal InsetNode(float amount) => _amount = amount;
 
-    protected override Rect Compute(Rect parent) => parent.Inset(_amount);
+    protected override Rect Layout(Rect parent) => parent.Inset(_amount);
 }

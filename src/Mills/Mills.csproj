@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gamewright.Graphics\Gamewright.Graphics.csproj" />
+    <ProjectReference Include="..\Gamewright.SquareBoard\Gamewright.SquareBoard.csproj" />
+    <ProjectReference Include="..\Gamewright.SquareBoard.Graphics\Gamewright.SquareBoard.Graphics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.23.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="pieces_atlas.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+
+</Project>

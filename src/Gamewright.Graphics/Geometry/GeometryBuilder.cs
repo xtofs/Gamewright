@@ -1,10 +1,8 @@
 namespace Gamewright.Graphics.Geometry;
 
-using Gamewright.Graphics;
-
-
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Gamewright.Graphics;
 
 internal static class GeometryBuilder
 {

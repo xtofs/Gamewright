@@ -1,10 +1,10 @@
 namespace Chess;
 
 using Gamewright.Graphics;
+using Gamewright.Graphics.Utilities;
 using Gamewright.SquareBoard;
 using Gamewright.SquareBoard.Graphics;
 using Silk.NET.Input;
-using Gamewright.Graphics.Utilities;
 
 public sealed class ChessScene : IScene
 {
@@ -16,7 +16,7 @@ public sealed class ChessScene : IScene
 
     private readonly RootNode _root = new();
 
-    private readonly SquareBoardNode _boardNode;
+    private readonly CheckerboardNode _boardNode;
 
     private readonly CheckerBoard<Piece> _board;
 
@@ -25,7 +25,7 @@ public sealed class ChessScene : IScene
     public ChessScene(Window window)
     {
         _window = window;
-        _boardNode = _root.AddSquareBoard(8, 8, insetFraction: 0.01f);
+        _boardNode = _root.AddCheckerboard(8, 8, insetFraction: 0.01f);
         _board = SetupBoard();
     }
 
@@ -121,7 +121,10 @@ public sealed class ChessScene : IScene
     {
         var path = Path.Combine(AppContext.BaseDirectory, "pieces_atlas.png");
         if (!File.Exists(path))
+        {
             throw new FileNotFoundException("The chess piece atlas was not found.", path);
+        }
+
         var regions = Enum.GetValues<Piece>().ToDictionary(p => p, GetRegion);
         return device.LoadAtlas(path, regions);
     }

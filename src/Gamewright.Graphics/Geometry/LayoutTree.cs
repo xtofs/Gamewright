@@ -16,13 +16,13 @@ public abstract class Node
 
     internal void Recompute(Rect parentRect)
     {
-        Rect = Compute(parentRect);
-        RecomputeChildren();
+        Rect = Layout(parentRect);
+        LayoutChildren();
     }
 
-    protected abstract Rect Compute(Rect parent);
+    protected abstract Rect Layout(Rect parent);
 
-    protected virtual void RecomputeChildren()
+    protected virtual void LayoutChildren()
     {
         foreach (var child in Children)
         {
@@ -68,7 +68,7 @@ public abstract class SingleChildNode : Node
         Child = child;
     }
 
-    protected override void RecomputeChildren() => Child?.Recompute(Rect);
+    protected override void LayoutChildren() => Child?.Recompute(Rect);
 }
 
 /// <summary>A node that holds no children and is always a hit-test target.</summary>
@@ -81,7 +81,7 @@ public abstract class LeafNode : Node
     protected override void OnAddChild(Node child)
         => throw new InvalidOperationException($"{GetType().Name} cannot have children.");
 
-    protected override void RecomputeChildren() { }
+    protected override void LayoutChildren() { }
 }
 
 public static class NodeExtensions

@@ -89,9 +89,9 @@ public sealed class Grid : Node
         }
     }
 
-    protected override Rect Compute(Rect parent) => parent;
+    protected override Rect Layout(Rect parent) => parent;
 
-    protected override void RecomputeChildren()
+    protected override void LayoutChildren()
     {
         var xs = ComputeOffsets(ColumnDefinitions.Length, i => ColumnDefinitions[i].Width, Rect.Width, Rect.X);
         var ys = ComputeOffsets(RowDefinitions.Length, i => RowDefinitions[i].Height, Rect.Height, Rect.Y);
@@ -170,7 +170,7 @@ public sealed class Grid : Node
             Row = row;
         }
 
-        protected override Rect Compute(Rect parent) => parent;
+        protected override Rect Layout(Rect parent) => parent;
     }
 }
 

@@ -1,12 +1,12 @@
 namespace Gamewright.Graphics;
 
 using System.Numerics;
+using Gamewright.Graphics.Utilities;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Gamewright.Graphics.Utilities;
-using SilkWindow = Silk.NET.Windowing.Window;
 using Silk.NET.Windowing;
+using SilkWindow = Silk.NET.Windowing.Window;
 
 public sealed class Window : IDisposable
 {

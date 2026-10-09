@@ -1,10 +1,10 @@
 namespace Havanna;
 
+using System.Numerics;
 using Gamewright.Graphics;
 using Gamewright.HexBoard;
 using Gamewright.HexBoard.Graphics;
 using Silk.NET.Input;
-using System.Numerics;
 
 public sealed class HavannaScene : IScene
 {

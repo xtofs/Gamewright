@@ -15,7 +15,7 @@ public sealed class HexBoardNode(int radius) : LeafNode
     /// <inheritdoc cref="HexLayout.TryGetHex"/>
     public bool TryGetHex(Vector2 position, out Coordinate hex) => Layout.TryGetHex(position, out hex);
 
-    protected override Rect Compute(Rect parent)
+    protected override Rect Layout(Rect parent)
     {
         Layout.Update(parent.Position, parent.Size);
         return parent;

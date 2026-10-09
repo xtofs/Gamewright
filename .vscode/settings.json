@@ -8,7 +8,9 @@
         "Glsl",
         "Havanna",
         "Havannah",
-        "stbtt"
+        "Mills",
+        "stbtt",
+        "succ"
     ],
     "dotnet.defaultSolution": "Gamewright.slnx"
 }

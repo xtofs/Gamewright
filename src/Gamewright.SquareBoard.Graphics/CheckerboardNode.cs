@@ -10,19 +10,19 @@ using Gamewright.SquareBoard;
 /// Rank 0 is at the bottom and file 0 on the left; all coordinates are in framebuffer pixels.
 /// </summary>
 /// <remarks>
-/// The squares fill the rect, so add it through <see cref="SquareBoardNodeExtensions.AddSquareBoard"/>
+/// The squares fill the rect, so add it through <see cref="CheckerboardNodeExtensions.AddCheckerboard"/>
 /// to keep them square.
 /// </remarks>
-public sealed class SquareBoardNode : SingleChildNode
+public sealed class CheckerboardNode : SingleChildNode
 {
     // border tracks are 1 unit wide, squares 4 units, so a border is 1/4 of a square
-    private static readonly GridLength Border = new(1, GridLengthUnit.Proportional);
-    private static readonly GridLength Square = new(4, GridLengthUnit.Proportional);
+    private static readonly GridLength BorderSize = new(1, GridLengthUnit.Proportional);
+    private static readonly GridLength SquareSize = new(4, GridLengthUnit.Proportional);
 
     private readonly Grid _grid;
     private readonly int _border;
 
-    public SquareBoardNode(int files, int ranks, bool withLabels = true, Color? light = null, Color? dark = null)
+    public CheckerboardNode(int files, int ranks, bool withLabels = true, Color? light = null, Color? dark = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(files);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ranks);
@@ -118,7 +118,7 @@ public sealed class SquareBoardNode : SingleChildNode
         return Contains(square);
     }
 
-    protected override Rect Compute(Rect parent) => parent;
+    protected override Rect Layout(Rect parent) => parent;
 
     private bool Contains(Coordinate square)
         => square.Column >= 0 && square.Column < Columns && square.Row >= 0 && square.Row < Rows;
@@ -130,22 +130,8 @@ public sealed class SquareBoardNode : SingleChildNode
 
     private IEnumerable<GridLength> Tracks(int count)
     {
-        if (_border > 0) { yield return Border; }
-        for (var i = 0; i < count; i++) { yield return Square; }
-        if (_border > 0) { yield return Border; }
+        if (_border > 0) { yield return BorderSize; }
+        for (var i = 0; i < count; i++) { yield return SquareSize; }
+        if (_border > 0) { yield return BorderSize; }
     }
-}
-
-public static class SquareBoardNodeExtensions
-{
-    /// <summary>
-    /// Adds a board of <paramref name="files"/> × <paramref name="ranks"/> squares, centered at
-    /// its own aspect ratio so the squares stay square.
-    /// </summary>
-    public static SquareBoardNode AddSquareBoard(
-        this Node parent, int files, int ranks, bool withLabels = true, float insetFraction = 0f,
-        Color? light = null, Color? dark = null)
-        => parent
-            .AddCenteredCanvas(SquareBoardNode.AspectRatio(files, ranks, withLabels), insetFraction)
-            .Add(new SquareBoardNode(files, ranks, withLabels, light, dark));
 }

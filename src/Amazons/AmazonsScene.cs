@@ -1,10 +1,10 @@
 namespace Amazons;
 
 using Gamewright.Graphics;
+using Gamewright.Graphics.Utilities;
 using Gamewright.SquareBoard;
 using Gamewright.SquareBoard.Graphics;
 using Silk.NET.Input;
-using Gamewright.Graphics.Utilities;
 
 public sealed class AmazonsScene : IScene
 {
@@ -23,7 +23,7 @@ public sealed class AmazonsScene : IScene
     // Layout nodes for the scene
     private readonly RootNode _root = new();
 
-    private readonly SquareBoardNode _boardNode;
+    private readonly CheckerboardNode _boardNode;
 
     // ////////////////
     // game state
@@ -34,7 +34,7 @@ public sealed class AmazonsScene : IScene
     public AmazonsScene(Window window)
     {
         _window = window;
-        _boardNode = _root.AddSquareBoard(N, N, insetFraction: 0.01f);
+        _boardNode = _root.AddCheckerboard(N, N, insetFraction: 0.01f);
 
         _game = new Game();
         _selection = new SelectionState();
