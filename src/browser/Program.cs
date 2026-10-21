@@ -29,55 +29,31 @@ internal class Program
 
 partial class Api
 {
-    [JSImport("dom.submitStatic", "main.js")]
-    private static partial void SubmitStatic(
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] commands,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] pathData,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] double[] geometry,
-        [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] styles);
-
-    [JSImport("dom.submitDynamic", "main.js")]
-    private static partial void SubmitDynamic(
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] commands,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] pathData,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] double[] geometry,
-        [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings,
-        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] styles);
+    // The byte spans are views into WebAssembly memory that are only valid during the call;
+    // the renderer must copy what it keeps.
+    [JSImport("dom.submitFrame", "main.js")]
+    private static partial void SubmitFrame(
+        bool isStatic,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> commands,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> pathData,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> geometry,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> styles,
+        [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings);
 
     [JSImport("dom.reportError", "main.js")]
     internal static partial void ReportError(string message);
 
-    internal static void SendStatic(Frame frame) => SubmitStatic(
-        EncodeCommands(frame.Commands),
-        Array.ConvertAll(frame.PathData, static value => (int)value),
-        Array.ConvertAll(frame.Geometry, static value => (double)value),
-        frame.Strings,
-        EncodeStyles(frame.Styles));
+    internal static void SendStatic(Frame frame) => Send(true, frame);
 
-    internal static void SendDynamic(Frame frame) => SubmitDynamic(
-        EncodeCommands(frame.Commands),
-        Array.ConvertAll(frame.PathData, static value => (int)value),
-        Array.ConvertAll(frame.Geometry, static value => (double)value),
-        frame.Strings,
-        EncodeStyles(frame.Styles));
+    internal static void SendDynamic(Frame frame) => Send(false, frame);
 
-    private static int[] EncodeCommands(DrawCommand[] commands) => commands
-        .SelectMany(static command => new[]
-        {
-            (int)command.Type,
-            command.StyleIndex,
-            command.Flags,
-            command.GeometryOffset,
-            command.GeometryLength,
-            command.PathDataOffset,
-            command.PathDataLength,
-            command.Data
-        })
-        .ToArray();
-
-    private static int[] EncodeStyles(Style[] styles) =>
-        MemoryMarshal.AsBytes(styles.AsSpan()).ToArray().Select(static value => (int)value).ToArray();
+    private static void Send(bool isStatic, Frame frame) => SubmitFrame(
+        isStatic,
+        MemoryMarshal.AsBytes(frame.Commands.AsSpan()),
+        frame.PathData,
+        MemoryMarshal.AsBytes(frame.Geometry.AsSpan()),
+        MemoryMarshal.AsBytes(frame.Styles.AsSpan()),
+        frame.Strings);
 }
 
 partial class ChessSample

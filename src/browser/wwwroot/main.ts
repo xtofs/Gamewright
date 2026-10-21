@@ -387,50 +387,62 @@ function colorToCss(rgba: number): string {
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
+const CommandSize = 26;
+const StyleSize = 16;
+
+// The byte arguments are views into WebAssembly memory that are only valid during this call,
+// so everything is copied out here. Layouts match Gamewright.DrawCommand and Gamewright.Style.
 function decodeFrame(
-    encodedCommands: number[],
-    encodedPathData: number[],
-    geometry: number[],
-    strings: string[],
-    encodedStyles: number[]
+    commandView: Uint8Array,
+    pathData: Uint8Array,
+    geometryView: Uint8Array,
+    styleView: Uint8Array,
+    strings: string[]
 ): Frame {
-    if (encodedCommands.length % 8 !== 0) {
+    const commandBytes = commandView.slice();
+    const geometryBytes = geometryView.slice();
+    const styleBytes = styleView.slice();
+
+    if (commandBytes.length % CommandSize !== 0) {
         throw new Error('Frame command buffer has an invalid length.');
     }
-    if (encodedStyles.length % 16 !== 0) {
+    if (styleBytes.length % StyleSize !== 0) {
         throw new Error('Frame style buffer has an invalid length.');
     }
+    if (geometryBytes.length % 4 !== 0) {
+        throw new Error('Frame geometry buffer has an invalid length.');
+    }
 
+    const commandData = new DataView(commandBytes.buffer);
     const commands: DrawCommand[] = [];
-    for (let offset = 0; offset < encodedCommands.length; offset += 8) {
+    for (let offset = 0; offset < commandBytes.length; offset += CommandSize) {
         commands.push({
-            type: encodedCommands[offset] as DrawCommandType,
-            styleIndex: encodedCommands[offset + 1],
-            flags: encodedCommands[offset + 2],
-            geometryOffset: encodedCommands[offset + 3],
-            geometryLength: encodedCommands[offset + 4],
-            pathDataOffset: encodedCommands[offset + 5],
-            pathDataLength: encodedCommands[offset + 6],
-            data: encodedCommands[offset + 7]
+            type: commandData.getUint16(offset, true) as DrawCommandType,
+            styleIndex: commandData.getUint16(offset + 2, true),
+            flags: commandData.getUint16(offset + 4, true),
+            geometryOffset: commandData.getInt32(offset + 6, true),
+            geometryLength: commandData.getInt32(offset + 10, true),
+            pathDataOffset: commandData.getInt32(offset + 14, true),
+            pathDataLength: commandData.getInt32(offset + 18, true),
+            data: commandData.getInt32(offset + 22, true)
         });
     }
 
-    const styleBytes = Uint8Array.from(encodedStyles);
-    const styleView = new DataView(styleBytes.buffer);
+    const styleData = new DataView(styleBytes.buffer);
     const styles: Style[] = [];
-    for (let offset = 0; offset < styleBytes.length; offset += 16) {
+    for (let offset = 0; offset < styleBytes.length; offset += StyleSize) {
         styles.push({
-            fillColor: styleView.getUint32(offset, true),
-            strokeColor: styleView.getUint32(offset + 4, true),
-            strokeWidth: styleView.getFloat32(offset + 8, true),
-            fontIndex: styleView.getInt32(offset + 12, true)
+            fillColor: styleData.getUint32(offset, true),
+            strokeColor: styleData.getUint32(offset + 4, true),
+            strokeWidth: styleData.getFloat32(offset + 8, true),
+            fontIndex: styleData.getInt32(offset + 12, true)
         });
     }
 
     return {
         commands,
-        pathData: Uint8Array.from(encodedPathData),
-        geometry: Float32Array.from(geometry),
+        pathData: pathData.slice(),
+        geometry: new Float32Array(geometryBytes.buffer),
         strings,
         styles
     };
@@ -442,27 +454,22 @@ function reportError(message: string): void {
     element.hidden = false;
 }
 
-function submitStatic(
-    commands: number[],
-    pathData: number[],
-    geometry: number[],
-    strings: string[],
-    styles: number[]
+function submitFrame(
+    isStatic: boolean,
+    commands: Uint8Array,
+    pathData: Uint8Array,
+    geometry: Uint8Array,
+    styles: Uint8Array,
+    strings: string[]
 ): void {
-    staticFrame = decodeFrame(commands, pathData, geometry, strings, styles);
-    staticCacheWidth = 0;
-    staticCacheHeight = 0;
-    renderScene();
-}
-
-function submitDynamic(
-    commands: number[],
-    pathData: number[],
-    geometry: number[],
-    strings: string[],
-    styles: number[]
-): void {
-    dynamicFrame = decodeFrame(commands, pathData, geometry, strings, styles);
+    const frame = decodeFrame(commands, pathData, geometry, styles, strings);
+    if (isStatic) {
+        staticFrame = frame;
+        staticCacheWidth = 0;
+        staticCacheHeight = 0;
+    } else {
+        dynamicFrame = frame;
+    }
     renderScene();
 }
 
@@ -472,7 +479,7 @@ try {
         .create();
 
     setModuleImports('main.js', {
-        dom: { submitStatic, submitDynamic, reportError }
+        dom: { submitFrame, reportError }
     });
 
     const config = getConfig();

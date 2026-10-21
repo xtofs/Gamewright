@@ -84,4 +84,18 @@ public class FrameBuilderTests
 
         Assert.Empty(builder.Build().Commands);
     }
+
+    [Fact]
+    public void IdenticalStylesAreShared()
+    {
+        var frame = new FrameBuilder()
+            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), strokeStyle: new StrokeStyle(Red, 2))
+            .AddPath(path => path.MoveTo(2, 2).LineTo(3, 3), strokeStyle: new StrokeStyle(Red, 2))
+            .AddPath(path => path.MoveTo(4, 4).LineTo(5, 5), strokeStyle: new StrokeStyle(Red, 3))
+            .Build();
+
+        Assert.Equal(2, frame.Styles.Length);
+        Assert.Equal(frame.Commands[0].StyleIndex, frame.Commands[1].StyleIndex);
+        Assert.NotEqual(frame.Commands[0].StyleIndex, frame.Commands[2].StyleIndex);
+    }
 }

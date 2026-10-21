@@ -6,6 +6,7 @@ public sealed class FrameBuilder
     private readonly List<byte> pathData = [];
     private readonly List<float> geometry = [];
     private readonly List<Style> styles = [];
+    private readonly Dictionary<Style, ushort> styleIndices = [];
     private readonly List<string> strings = [];
 
     public FrameBuilder AddPath(
@@ -142,11 +143,15 @@ public sealed class FrameBuilder
 
     private ushort AddStyle(Style style)
     {
+        if (styleIndices.TryGetValue(style, out var existing))
+            return existing;
         if (styles.Count >= ushort.MaxValue)
             throw new InvalidOperationException("A frame cannot contain more than 65,535 styles.");
 
         styles.Add(style);
-        return (ushort)(styles.Count - 1);
+        var index = (ushort)(styles.Count - 1);
+        styleIndices[style] = index;
+        return index;
     }
 
     private int AddString(string value)
