@@ -55,9 +55,10 @@ const context = getRequiredContext(canvas);
 const staticCanvas = document.createElement('canvas');
 const staticContext = getRequiredContext(staticCanvas);
 
-// Frames are authored in this coordinate space and scaled to the canvas.
-const LogicalWidth = 640;
-const LogicalHeight = 620;
+// Frames are authored in this coordinate space and scaled to the canvas. The host
+// supplies the size (ChessGame.FrameWidth/FrameHeight) before the first frame.
+let frameWidth = 0;
+let frameHeight = 0;
 
 // Sprite sheet layout, supplied by the host (Gamewright.SpriteSheet) before the first frame.
 let sheetColumns = 0;
@@ -96,15 +97,18 @@ function getRequiredContext(target: HTMLCanvasElement): CanvasRenderingContext2D
 }
 
 function resizeCanvas(target: HTMLCanvasElement): number {
+    if (frameWidth === 0 || frameHeight === 0) {
+        throw new Error('The frame size was not configured.');
+    }
     const ratio = window.devicePixelRatio || 1;
     const width = Math.round(target.clientWidth * ratio);
-    const height = Math.round(target.clientWidth * ratio * LogicalHeight / LogicalWidth);
+    const height = Math.round(target.clientWidth * ratio * frameHeight / frameWidth);
 
     if (target.width !== width || target.height !== height) {
         target.width = width;
         target.height = height;
     }
-    return width / LogicalWidth;
+    return width / frameWidth;
 }
 
 // Counters for the stats panel; the per-second ones are reset each time the panel updates.
@@ -505,6 +509,14 @@ function decodeFrame(
     };
 }
 
+function configureFrame(width: number, height: number): void {
+    frameWidth = width;
+    frameHeight = height;
+    // Gives the canvas its aspect ratio before the first frame is drawn.
+    canvas.width = width;
+    canvas.height = height;
+}
+
 function configureSprites(columns: number, cellSize: number): void {
     sheetColumns = columns;
     spriteSize = cellSize;
@@ -551,7 +563,7 @@ try {
     const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet.create();
 
     setModuleImports('main.js', {
-        dom: { submitFrame, configureSprites, reportError }
+        dom: { submitFrame, configureFrame, configureSprites, reportError }
     });
 
     const config = getConfig();
@@ -562,8 +574,8 @@ try {
         const bounds = canvas.getBoundingClientRect();
         try {
             exports.ChessGame.Click(
-                (event.clientX - bounds.left) * LogicalWidth / bounds.width,
-                (event.clientY - bounds.top) * LogicalHeight / bounds.height
+                (event.clientX - bounds.left) * frameWidth / bounds.width,
+                (event.clientY - bounds.top) * frameHeight / bounds.height
             );
         } catch (error) {
             reportError(error instanceof Error ? error.message : String(error));

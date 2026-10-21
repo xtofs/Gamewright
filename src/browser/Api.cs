@@ -15,6 +15,9 @@ partial class Api
         [JSMarshalAs<JSType.MemoryView>] Span<byte> styles,
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings);
 
+    [JSImport("dom.configureFrame", "main.js")]
+    internal static partial void ConfigureFrame(int width, int height);
+
     [JSImport("dom.configureSprites", "main.js")]
     internal static partial void ConfigureSprites(int columns, int cellSize);
 

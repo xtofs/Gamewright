@@ -2,16 +2,19 @@ using System.Runtime.InteropServices.JavaScript;
 using Gamewright;
 
 // The browser-facing game: draws a ChessBoard into frames and turns clicks into board moves.
-// Coordinates are in the 640x620 logical space that main.ts scales to the canvas.
+// Coordinates are in the FrameWidth x FrameHeight space that main.ts scales to the canvas.
 partial class ChessGame
 {
+    public const int FrameWidth = 640;
+    public const int FrameHeight = 620;
+
     private const float BoardX = 112;
     private const float BoardY = 104;
     private const float CellSize = 52;
     private const float BoardSize = CellSize * ChessBoard.Size;
     private const float FrameMargin = 34;
     private const float PieceSize = 44;
-    private const float CenterX = 320;
+    private const float CenterX = FrameWidth / 2f;
 
     private static readonly Color DarkSquare = new(91, 119, 92);
     private static readonly Color LightSquare = new(223, 214, 190);
