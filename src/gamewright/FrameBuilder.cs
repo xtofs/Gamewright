@@ -5,68 +5,55 @@ public sealed class FrameBuilder
     private readonly List<DrawCommand> commands = [];
     private readonly List<byte> pathData = [];
     private readonly List<float> geometry = [];
-    private readonly List<Style> styles = [];
-    private readonly Dictionary<Style, ushort> styleIndices = [];
+    private readonly List<Paint> paints = [];
+    private readonly Dictionary<Paint, ushort> paintIndices = [];
+    private readonly List<TextStyle> textStyles = [];
+    private readonly Dictionary<TextStyle, ushort> textStyleIndices = [];
     private readonly List<string> strings = [];
 
-    public FrameBuilder AddPath(
-        string path,
-        Color? fillColor = null,
-        StrokeStyle? strokeStyle = null)
+    public FrameBuilder AddPath(string path, Paint paint)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        RequireDrawable(paint);
 
         var parsed = SvgPathParser.Parse(path);
-        AddPath(parsed.PathData, parsed.Geometry, fillColor, strokeStyle, parsed.Closed);
+        AddPath(parsed.PathData, parsed.Geometry, paint, parsed.Closed);
         return this;
     }
 
-    public FrameBuilder AddPath(
-        Action<PathBuilder> buildPath,
-        Color? fillColor = null,
-        StrokeStyle? strokeStyle = null)
+    public FrameBuilder AddPath(Action<PathBuilder> buildPath, Paint paint)
     {
         ArgumentNullException.ThrowIfNull(buildPath);
+        RequireDrawable(paint);
+
         var path = new PathBuilder();
         buildPath(path);
         var result = path.Build();
-        AddPath(result.PathData, result.Geometry, fillColor, strokeStyle, result.Closed);
+        AddPath(result.PathData, result.Geometry, paint, result.Closed);
         return this;
     }
 
-    private void AddPath(
-        byte[] operations,
-        float[] pathGeometry,
-        Color? fillColor,
-        StrokeStyle? strokeStyle,
-        bool closed)
+    private void AddPath(byte[] operations, float[] pathGeometry, Paint paint, bool closed)
     {
-        if (fillColor is null && strokeStyle is null)
-            throw new ArgumentException("A path must have a fill or stroke style.");
-        if (strokeStyle is { Width: <= 0 } || strokeStyle is { Width: var width } && !float.IsFinite(width))
-            throw new ArgumentOutOfRangeException(nameof(strokeStyle), "Stroke width must be finite and positive.");
-
         var pathDataOffset = pathData.Count;
         var geometryOffset = geometry.Count;
         pathData.AddRange(operations);
         AddGeometry(pathGeometry);
-        var styleIndex = AddStyle(new Style(
-            fillColor?.Rgba ?? 0,
-            strokeStyle?.Color.Rgba ?? 0,
-            strokeStyle?.Width ?? 0,
-            (int)FontIndex.Body));
-        var flags = (fillColor is null ? DrawCommandFlags.None : DrawCommandFlags.Fill)
-            | (strokeStyle is null ? DrawCommandFlags.None : DrawCommandFlags.Stroke)
-            | (closed ? DrawCommandFlags.Closed : DrawCommandFlags.None);
         commands.Add(new DrawCommand(
             DrawCommandType.Path,
-            styleIndex,
-            (ushort)flags,
+            AddStyle(paints, paintIndices, paint),
+            (ushort)(closed ? DrawCommandFlags.Closed : DrawCommandFlags.None),
             geometryOffset,
             pathGeometry.Length,
             pathDataOffset,
             operations.Length,
             0));
+    }
+
+    private static void RequireDrawable(Paint paint)
+    {
+        if (paint.IsEmpty)
+            throw new ArgumentException("A path must have a fill or a stroke.", nameof(paint));
     }
 
     public FrameBuilder AddSprite(int spriteIndex, float x, float y, float width, float height)
@@ -78,8 +65,7 @@ public sealed class FrameBuilder
 
         ValidateGeometry([x, y, width, height]);
         var geometryOffset = AddGeometry([x, y, width, height]);
-        var styleIndex = AddStyle(default);
-        commands.Add(new DrawCommand(DrawCommandType.Image, styleIndex, 0, geometryOffset, 4, 0, 0, spriteIndex));
+        commands.Add(new DrawCommand(DrawCommandType.Image, 0, 0, geometryOffset, 4, 0, 0, spriteIndex));
         return this;
     }
 
@@ -98,7 +84,7 @@ public sealed class FrameBuilder
         ValidateGeometry([x, y]);
         var stringIndex = AddString(text);
         var geometryOffset = AddGeometry([x, y]);
-        var styleIndex = AddStyle(new Style(fillColor.Rgba, 0, 0, (int)font));
+        var styleIndex = AddStyle(textStyles, textStyleIndices, new TextStyle(fillColor.Rgba, (int)font));
         var flags = alignment switch
         {
             TextAlignment.Start => DrawCommandFlags.None,
@@ -118,7 +104,8 @@ public sealed class FrameBuilder
         return this;
     }
 
-    public Frame Build() => new Frame([.. commands], [.. pathData], [.. geometry], [.. styles], [.. strings]);
+    public Frame Build() =>
+        new Frame([.. commands], [.. pathData], [.. geometry], [.. paints], [.. textStyles], [.. strings]);
 
     private int AddGeometry(ReadOnlySpan<float> values)
     {
@@ -141,16 +128,17 @@ public sealed class FrameBuilder
         }
     }
 
-    private ushort AddStyle(Style style)
+    private static ushort AddStyle<T>(List<T> table, Dictionary<T, ushort> indices, T style)
+        where T : notnull
     {
-        if (styleIndices.TryGetValue(style, out var existing))
+        if (indices.TryGetValue(style, out var existing))
             return existing;
-        if (styles.Count >= ushort.MaxValue)
-            throw new InvalidOperationException("A frame cannot contain more than 65,535 styles.");
+        if (table.Count >= ushort.MaxValue)
+            throw new InvalidOperationException("A frame cannot contain more than 65,535 styles of one kind.");
 
-        styles.Add(style);
-        var index = (ushort)(styles.Count - 1);
-        styleIndices[style] = index;
+        table.Add(style);
+        var index = (ushort)(table.Count - 1);
+        indices[style] = index;
         return index;
     }
 

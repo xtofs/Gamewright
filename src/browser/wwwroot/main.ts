@@ -7,11 +7,17 @@ const enum DrawCommandType {
 }
 
 const enum DrawCommandFlags {
+    Closed = 1,
+    AlignCenter = 2,
+    AlignEnd = 4
+}
+
+const enum PaintMode {
+    None = 0,
     Fill = 1,
     Stroke = 2,
-    Closed = 4,
-    AlignCenter = 8,
-    AlignEnd = 16
+    FillThenStroke = 3,
+    StrokeThenFill = 4
 }
 
 const enum PathOpcode {
@@ -34,11 +40,17 @@ type DrawCommand = {
     data: number;
 };
 
-type Style = {
+// How a path is painted; only drawPath looks inside it.
+type Paint = {
     fillColor: number;
     strokeColor: number;
     strokeWidth: number;
-    fontIndex: number;
+    mode: PaintMode;
+};
+
+type TextStyle = {
+    color: number;
+    font: number;
 };
 
 type Frame = {
@@ -46,7 +58,8 @@ type Frame = {
     pathData: Uint8Array;
     geometry: Float32Array;
     strings: string[];
-    styles: Style[];
+    paints: Paint[];
+    textStyles: TextStyle[];
 };
 
 const fonts = ['16px system-ui', '600 24px system-ui'];
@@ -210,13 +223,12 @@ function drawScene(): void {
 
 function drawCommands(target: CanvasRenderingContext2D, frame: Frame): void {
     for (const command of frame.commands) {
-        const style = readStyle(frame, command.styleIndex);
         switch (command.type) {
             case DrawCommandType.Path:
-                drawPath(target, frame, command, style);
+                drawPath(target, frame, command, readPaint(frame, command.styleIndex));
                 break;
             case DrawCommandType.Text:
-                drawText(target, frame, command, style);
+                drawText(target, frame, command, readTextStyle(frame, command.styleIndex));
                 break;
             case DrawCommandType.Image:
                 drawSprite(
@@ -234,10 +246,18 @@ function drawCommands(target: CanvasRenderingContext2D, frame: Frame): void {
     }
 }
 
-function readStyle(frame: Frame, styleIndex: number): Style {
-    const style = frame.styles[styleIndex];
+function readPaint(frame: Frame, styleIndex: number): Paint {
+    const paint = frame.paints[styleIndex];
+    if (!paint) {
+        throw new Error(`Frame paint index ${styleIndex} is out of range.`);
+    }
+    return paint;
+}
+
+function readTextStyle(frame: Frame, styleIndex: number): TextStyle {
+    const style = frame.textStyles[styleIndex];
     if (!style) {
-        throw new Error(`Frame style index ${styleIndex} is out of range.`);
+        throw new Error(`Frame text style index ${styleIndex} is out of range.`);
     }
     return style;
 }
@@ -255,7 +275,7 @@ function readGeometry(frame: Frame, command: DrawCommand, relativeIndex: number)
     return value;
 }
 
-function drawPath(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, style: Style): void {
+function drawPath(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, paint: Paint): void {
     const path = new Path2D();
     let pathOffset = command.pathDataOffset;
     let geometryOffset = command.geometryOffset;
@@ -334,15 +354,35 @@ function drawPath(target: CanvasRenderingContext2D, frame: Frame, command: DrawC
         && frame.pathData[pathEnd - 1] !== PathOpcode.ClosePath) {
         path.closePath();
     }
-    if ((command.flags & DrawCommandFlags.Fill) !== 0) {
-        target.fillStyle = colorToCss(style.fillColor);
-        target.fill(path);
+    switch (paint.mode) {
+        case PaintMode.Fill:
+            fillPath(target, path, paint);
+            break;
+        case PaintMode.Stroke:
+            strokePath(target, path, paint);
+            break;
+        case PaintMode.FillThenStroke:
+            fillPath(target, path, paint);
+            strokePath(target, path, paint);
+            break;
+        case PaintMode.StrokeThenFill:
+            strokePath(target, path, paint);
+            fillPath(target, path, paint);
+            break;
+        default:
+            throw new Error(`Unknown paint mode: ${paint.mode}`);
     }
-    if ((command.flags & DrawCommandFlags.Stroke) !== 0) {
-        target.strokeStyle = colorToCss(style.strokeColor);
-        target.lineWidth = style.strokeWidth;
-        target.stroke(path);
-    }
+}
+
+function fillPath(target: CanvasRenderingContext2D, path: Path2D, paint: Paint): void {
+    target.fillStyle = colorToCss(paint.fillColor);
+    target.fill(path);
+}
+
+function strokePath(target: CanvasRenderingContext2D, path: Path2D, paint: Paint): void {
+    target.strokeStyle = colorToCss(paint.strokeColor);
+    target.lineWidth = paint.strokeWidth;
+    target.stroke(path);
 }
 
 function readPathNumber(frame: Frame, end: number, index: number): number {
@@ -412,17 +452,17 @@ function drawSvgArc(
     path.ellipse(centerX, centerY, rx, ry, phi, startAngle, startAngle + delta, !sweep);
 }
 
-function drawText(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, style: Style): void {
+function drawText(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, style: TextStyle): void {
     const text = frame.strings[command.data];
-    const font = fonts[style.fontIndex];
+    const font = fonts[style.font];
     if (text === undefined) {
         throw new Error(`Frame string index ${command.data} is out of range.`);
     }
     if (font === undefined) {
-        throw new Error(`Font index ${style.fontIndex} is out of range.`);
+        throw new Error(`Font index ${style.font} is out of range.`);
     }
 
-    target.fillStyle = colorToCss(style.fillColor);
+    target.fillStyle = colorToCss(style.color);
     target.font = font;
     target.textAlign = (command.flags & DrawCommandFlags.AlignCenter) !== 0
         ? 'center'
@@ -466,26 +506,33 @@ function colorToCss(rgba: number): string {
 }
 
 const CommandSize = 26;
-const StyleSize = 16;
+const PaintSize = 16;
+const TextStyleSize = 8;
 
 // The byte arguments are views into WebAssembly memory that are only valid during this call,
-// so everything is copied out here. Layouts match Gamewright.DrawCommand and Gamewright.Style.
+// so everything is copied out here. Layouts match Gamewright.DrawCommand, Gamewright.Paint and
+// Gamewright.TextStyle.
 function decodeFrame(
     commandView: Uint8Array,
     pathData: Uint8Array,
     geometryView: Uint8Array,
-    styleView: Uint8Array,
+    paintView: Uint8Array,
+    textStyleView: Uint8Array,
     strings: string[]
 ): Frame {
     const commandBytes = commandView.slice();
     const geometryBytes = geometryView.slice();
-    const styleBytes = styleView.slice();
+    const paintBytes = paintView.slice();
+    const textStyleBytes = textStyleView.slice();
 
     if (commandBytes.length % CommandSize !== 0) {
         throw new Error('Frame command buffer has an invalid length.');
     }
-    if (styleBytes.length % StyleSize !== 0) {
-        throw new Error('Frame style buffer has an invalid length.');
+    if (paintBytes.length % PaintSize !== 0) {
+        throw new Error('Frame paint buffer has an invalid length.');
+    }
+    if (textStyleBytes.length % TextStyleSize !== 0) {
+        throw new Error('Frame text style buffer has an invalid length.');
     }
     if (geometryBytes.length % 4 !== 0) {
         throw new Error('Frame geometry buffer has an invalid length.');
@@ -506,14 +553,23 @@ function decodeFrame(
         });
     }
 
-    const styleData = new DataView(styleBytes.buffer);
-    const styles: Style[] = [];
-    for (let offset = 0; offset < styleBytes.length; offset += StyleSize) {
-        styles.push({
-            fillColor: styleData.getUint32(offset, true),
-            strokeColor: styleData.getUint32(offset + 4, true),
-            strokeWidth: styleData.getFloat32(offset + 8, true),
-            fontIndex: styleData.getInt32(offset + 12, true)
+    const paintData = new DataView(paintBytes.buffer);
+    const paints: Paint[] = [];
+    for (let offset = 0; offset < paintBytes.length; offset += PaintSize) {
+        paints.push({
+            fillColor: paintData.getUint32(offset, true),
+            strokeColor: paintData.getUint32(offset + 4, true),
+            strokeWidth: paintData.getFloat32(offset + 8, true),
+            mode: paintData.getUint32(offset + 12, true) as PaintMode
+        });
+    }
+
+    const textStyleData = new DataView(textStyleBytes.buffer);
+    const textStyles: TextStyle[] = [];
+    for (let offset = 0; offset < textStyleBytes.length; offset += TextStyleSize) {
+        textStyles.push({
+            color: textStyleData.getUint32(offset, true),
+            font: textStyleData.getInt32(offset + 4, true)
         });
     }
 
@@ -522,7 +578,8 @@ function decodeFrame(
         pathData: pathData.slice(),
         geometry: new Float32Array(geometryBytes.buffer),
         strings,
-        styles
+        paints,
+        textStyles
     };
 }
 
@@ -549,10 +606,11 @@ function submitFrame(
     commands: Uint8Array,
     pathData: Uint8Array,
     geometry: Uint8Array,
-    styles: Uint8Array,
+    paints: Uint8Array,
+    textStyles: Uint8Array,
     strings: string[]
 ): void {
-    const byteLength = frameByteLength([commands, pathData, geometry, styles], strings);
+    const byteLength = frameByteLength([commands, pathData, geometry, paints, textStyles], strings);
     stats.submits++;
     stats.bytes += byteLength;
     stats.totalBytes += byteLength;
@@ -562,7 +620,7 @@ function submitFrame(
         stats.lastDynamicBytes = byteLength;
     }
 
-    const frame = decodeFrame(commands, pathData, geometry, styles, strings);
+    const frame = decodeFrame(commands, pathData, geometry, paints, textStyles, strings);
     if (isStatic) {
         staticFrame = frame;
         staticCacheWidth = 0;

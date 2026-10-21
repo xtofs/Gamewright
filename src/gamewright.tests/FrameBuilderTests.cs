@@ -8,7 +8,7 @@ public class FrameBuilderTests
 
     [Fact]
     public void PathNeedsFillOrStroke() =>
-        Assert.Throws<ArgumentException>(() => new FrameBuilder().AddPath("M0 0 L1 1"));
+        Assert.Throws<ArgumentException>(() => new FrameBuilder().AddPath("M0 0 L1 1", default(Paint)));
 
     [Theory]
     [InlineData(0f)]
@@ -17,14 +17,14 @@ public class FrameBuilderTests
     [InlineData(float.PositiveInfinity)]
     public void StrokeWidthMustBePositiveAndFinite(float width) =>
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new FrameBuilder().AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), strokeStyle: new StrokeStyle(Red, width)));
+            new FrameBuilder().AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), new StrokeStyle(Red, width)));
 
     [Fact]
     public void PathCommandPointsAtItsData()
     {
         var frame = new FrameBuilder()
-            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1).LineTo(2, 0).Close(), fillColor: Red)
-            .AddPath("M5 5 L6 6", strokeStyle: new StrokeStyle(Red, 2))
+            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1).LineTo(2, 0).Close(), Red)
+            .AddPath("M5 5 L6 6", new StrokeStyle(Red, 2))
             .Build();
 
         var second = frame.Commands[1];
@@ -33,9 +33,10 @@ public class FrameBuilderTests
         Assert.Equal(4, second.GeometryLength);
         Assert.Equal(4, second.PathDataOffset);
         Assert.Equal(2, second.PathDataLength);
-        Assert.Equal((ushort)DrawCommandFlags.Stroke, second.Flags);
-        Assert.Equal((ushort)(DrawCommandFlags.Fill | DrawCommandFlags.Closed), frame.Commands[0].Flags);
-        Assert.Equal(2f, frame.Styles[second.StyleIndex].StrokeWidth);
+        Assert.Equal((ushort)DrawCommandFlags.None, second.Flags);
+        Assert.Equal((ushort)DrawCommandFlags.Closed, frame.Commands[0].Flags);
+        Assert.Equal(PaintMode.Stroke, frame.Paints[second.StyleIndex].Mode);
+        Assert.Equal(2f, frame.Paints[second.StyleIndex].StrokeWidth);
     }
 
     [Fact]
@@ -51,8 +52,8 @@ public class FrameBuilderTests
         Assert.Equal(DrawCommandType.Text, command.Type);
         Assert.Equal(1, command.Data);
         Assert.Equal((ushort)DrawCommandFlags.AlignEnd, command.Flags);
-        Assert.Equal((int)FontIndex.Heading, frame.Styles[command.StyleIndex].FontIndex);
-        Assert.Equal(Red.Rgba, frame.Styles[command.StyleIndex].FillColor);
+        Assert.Equal((int)FontIndex.Heading, frame.TextStyles[command.StyleIndex].Font);
+        Assert.Equal(Red.Rgba, frame.TextStyles[command.StyleIndex].ColorRgba);
     }
 
     [Fact]
@@ -86,16 +87,55 @@ public class FrameBuilderTests
     }
 
     [Fact]
-    public void IdenticalStylesAreShared()
+    public void IdenticalPaintsAreShared()
     {
         var frame = new FrameBuilder()
-            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), strokeStyle: new StrokeStyle(Red, 2))
-            .AddPath(path => path.MoveTo(2, 2).LineTo(3, 3), strokeStyle: new StrokeStyle(Red, 2))
-            .AddPath(path => path.MoveTo(4, 4).LineTo(5, 5), strokeStyle: new StrokeStyle(Red, 3))
+            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), new StrokeStyle(Red, 2))
+            .AddPath(path => path.MoveTo(2, 2).LineTo(3, 3), new StrokeStyle(Red, 2))
+            .AddPath(path => path.MoveTo(4, 4).LineTo(5, 5), new StrokeStyle(Red, 3))
             .Build();
 
-        Assert.Equal(2, frame.Styles.Length);
+        Assert.Equal(2, frame.Paints.Length);
         Assert.Equal(frame.Commands[0].StyleIndex, frame.Commands[1].StyleIndex);
         Assert.NotEqual(frame.Commands[0].StyleIndex, frame.Commands[2].StyleIndex);
+    }
+
+    [Fact]
+    public void IdenticalTextStylesAreSharedAndKeptApartFromPaints()
+    {
+        var frame = new FrameBuilder()
+            .AddText("a", 0, 0, Red)
+            .AddText("b", 0, 0, Red)
+            .AddText("c", 0, 0, Red, FontIndex.Heading)
+            .AddPath(path => path.MoveTo(0, 0).LineTo(1, 1), Red)
+            .Build();
+
+        Assert.Equal(2, frame.TextStyles.Length);
+        Assert.Single(frame.Paints);
+        Assert.Equal(frame.Commands[0].StyleIndex, frame.Commands[1].StyleIndex);
+    }
+
+    [Fact]
+    public void BothPaintOrdersAreOneCommand()
+    {
+        var gold = new Color(215, 183, 126);
+        var frame = new FrameBuilder()
+            .AddPath("M0 0 L1 0 L1 1 Z", Paint.Fill(Red).WithStroke(gold, 4))
+            .AddPath("M0 0 L1 0 L1 1 Z", Paint.Stroke(gold, 4).WithFill(Red))
+            .Build();
+
+        Assert.Equal(2, frame.Commands.Length);
+        Assert.Equal(
+            [PaintMode.FillThenStroke, PaintMode.StrokeThenFill],
+            frame.Commands.Select(c => frame.Paints[c.StyleIndex].Mode));
+    }
+
+    [Fact]
+    public void SpritesAddNoStyles()
+    {
+        var frame = new FrameBuilder().AddSprite(3, 0, 0, 10, 10).Build();
+
+        Assert.Empty(frame.Paints);
+        Assert.Empty(frame.TextStyles);
     }
 }

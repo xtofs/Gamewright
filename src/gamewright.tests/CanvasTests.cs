@@ -33,9 +33,10 @@ public class CanvasTests
         var frame = canvas.Build();
         var command = Assert.Single(frame.Commands);
         Assert.Equal(DrawCommandType.Path, command.Type);
-        Assert.Equal((ushort)(DrawCommandFlags.Fill | DrawCommandFlags.Closed), command.Flags);
+        Assert.Equal((ushort)DrawCommandFlags.Closed, command.Flags);
         Assert.Equal([10f, 20, 40, 20, 40, 60, 10, 60], frame.Geometry);
-        Assert.Equal(Red.Rgba, frame.Styles[command.StyleIndex].FillColor);
+        Assert.Equal(PaintMode.Fill, frame.Paints[command.StyleIndex].Mode);
+        Assert.Equal(Red.Rgba, frame.Paints[command.StyleIndex].FillRgba);
     }
 
     [Fact]
@@ -46,8 +47,9 @@ public class CanvasTests
 
         var frame = canvas.Build();
         var command = Assert.Single(frame.Commands);
-        Assert.Equal((ushort)(DrawCommandFlags.Stroke | DrawCommandFlags.Closed), command.Flags);
-        Assert.Equal(2f, frame.Styles[command.StyleIndex].StrokeWidth);
+        Assert.Equal((ushort)DrawCommandFlags.Closed, command.Flags);
+        Assert.Equal(PaintMode.Stroke, frame.Paints[command.StyleIndex].Mode);
+        Assert.Equal(2f, frame.Paints[command.StyleIndex].StrokeWidth);
     }
 
     [Fact]

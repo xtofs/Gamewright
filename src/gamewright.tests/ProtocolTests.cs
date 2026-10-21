@@ -7,16 +7,27 @@ namespace Gamewright.Tests;
 public class ProtocolTests
 {
     [Fact]
-    public void StyleIsSixteenBytesWithTheFieldOrderMainTsReads()
+    public void PaintIsSixteenBytesWithTheFieldOrderMainTsReads()
     {
-        Style[] styles = [new Style(0x11223344u, 0x55667788u, 1.5f, 7)];
-        var bytes = MemoryMarshal.AsBytes<Style>(styles);
+        Paint[] paints = [Paint.Fill(new Color(0x11, 0x22, 0x33, 0x44)).WithStroke(new Color(0x55, 0x66, 0x77, 0x88), 1.5f)];
+        var bytes = MemoryMarshal.AsBytes<Paint>(paints);
 
         Assert.Equal(16, bytes.Length);
-        Assert.Equal(0x11223344u, BitConverter.ToUInt32(bytes[..4]));
-        Assert.Equal(0x55667788u, BitConverter.ToUInt32(bytes[4..8]));
+        Assert.Equal(0x44332211u, BitConverter.ToUInt32(bytes[..4]));
+        Assert.Equal(0x88776655u, BitConverter.ToUInt32(bytes[4..8]));
         Assert.Equal(1.5f, BitConverter.ToSingle(bytes[8..12]));
-        Assert.Equal(7, BitConverter.ToInt32(bytes[12..16]));
+        Assert.Equal(3u, BitConverter.ToUInt32(bytes[12..16]));
+    }
+
+    [Fact]
+    public void TextStyleIsEightBytesWithTheFieldOrderMainTsReads()
+    {
+        TextStyle[] styles = [new TextStyle(0x11223344u, (int)FontIndex.Heading)];
+        var bytes = MemoryMarshal.AsBytes<TextStyle>(styles);
+
+        Assert.Equal(8, bytes.Length);
+        Assert.Equal(0x11223344u, BitConverter.ToUInt32(bytes[..4]));
+        Assert.Equal(1, BitConverter.ToInt32(bytes[4..8]));
     }
 
     [Fact]
@@ -40,11 +51,13 @@ public class ProtocolTests
         Assert.Equal(
             [0, 1, 2, 3, 4, 5],
             Enum.GetValues<PathOpcode>().Select(static v => (int)v));
-        Assert.Equal(1, (int)DrawCommandFlags.Fill);
-        Assert.Equal(2, (int)DrawCommandFlags.Stroke);
-        Assert.Equal(4, (int)DrawCommandFlags.Closed);
-        Assert.Equal(8, (int)DrawCommandFlags.AlignCenter);
-        Assert.Equal(16, (int)DrawCommandFlags.AlignEnd);
+        Assert.Equal(1, (int)DrawCommandFlags.Closed);
+        Assert.Equal(2, (int)DrawCommandFlags.AlignCenter);
+        Assert.Equal(4, (int)DrawCommandFlags.AlignEnd);
+        Assert.Equal(
+            [0u, 1, 2, 3, 4],
+            new[] { PaintMode.None, PaintMode.Fill, PaintMode.Stroke, PaintMode.FillThenStroke, PaintMode.StrokeThenFill }
+                .Select(static m => (uint)m));
         Assert.Equal(0, (int)FontIndex.Body);
         Assert.Equal(1, (int)FontIndex.Heading);
     }

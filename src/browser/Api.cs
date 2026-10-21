@@ -12,7 +12,8 @@ partial class Api
         [JSMarshalAs<JSType.MemoryView>] Span<byte> commands,
         [JSMarshalAs<JSType.MemoryView>] Span<byte> pathData,
         [JSMarshalAs<JSType.MemoryView>] Span<byte> geometry,
-        [JSMarshalAs<JSType.MemoryView>] Span<byte> styles,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> paints,
+        [JSMarshalAs<JSType.MemoryView>] Span<byte> textStyles,
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings);
 
     [JSImport("dom.configureFrame", "main.js")]
@@ -33,6 +34,7 @@ partial class Api
         MemoryMarshal.AsBytes(frame.Commands.AsSpan()),
         frame.PathData,
         MemoryMarshal.AsBytes(frame.Geometry.AsSpan()),
-        MemoryMarshal.AsBytes(frame.Styles.AsSpan()),
+        MemoryMarshal.AsBytes(frame.Paints.AsSpan()),
+        MemoryMarshal.AsBytes(frame.TextStyles.AsSpan()),
         frame.Strings);
 }
