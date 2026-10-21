@@ -1,21 +1,5 @@
 namespace Gamewright;
 
-public enum PieceKind
-{
-    King,
-    Queen,
-    Rook,
-    Bishop,
-    Knight,
-    Pawn
-}
-
-public enum PieceColor
-{
-    White,
-    Black
-}
-
 /// <summary>Where the chess pieces are on the sprite sheet: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
 public static class ChessSprites
 {

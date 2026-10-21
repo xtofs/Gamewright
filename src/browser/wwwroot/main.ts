@@ -548,9 +548,7 @@ function submitFrame(
 setInterval(updateStats, 1000);
 
 try {
-    const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet
-        .withApplicationArguments('start')
-        .create();
+    const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet.create();
 
     setModuleImports('main.js', {
         dom: { submitFrame, configureSprites, reportError }
@@ -558,15 +556,22 @@ try {
 
     const config = getConfig();
     const exports = await getAssemblyExports(config.mainAssemblyName);
-    const pauseButton = getRequiredElement<HTMLButtonElement>('pause');
 
-    getRequiredElement<HTMLButtonElement>('reset').addEventListener('click', () => {
-        exports.ChessSample.Reset();
+    // Clicks are sent in the frame's logical coordinate space; C# decides what they hit.
+    canvas.addEventListener('pointerdown', (event) => {
+        const bounds = canvas.getBoundingClientRect();
+        try {
+            exports.ChessGame.Click(
+                (event.clientX - bounds.left) * LogicalWidth / bounds.width,
+                (event.clientY - bounds.top) * LogicalHeight / bounds.height
+            );
+        } catch (error) {
+            reportError(error instanceof Error ? error.message : String(error));
+        }
     });
 
-    pauseButton.addEventListener('click', () => {
-        const isRunning = exports.ChessSample.Toggle();
-        pauseButton.textContent = isRunning ? 'Pause' : 'Start';
+    getRequiredElement<HTMLButtonElement>('new-game').addEventListener('click', () => {
+        exports.ChessGame.NewGame();
     });
 
     await runMain();
