@@ -105,6 +105,30 @@ public class CanvasTests
     }
 
     [Fact]
+    public void CenteredTextIsDrawnAtTheRectangleCentreWithCentreAlignment()
+    {
+        var canvas = new Canvas(100, 100);
+        canvas.DrawTextCentered("A", 10, 20, 30, 40, Red, FontIndex.Heading);
+
+        var frame = canvas.Build();
+        var command = Assert.Single(frame.Commands);
+        Assert.Equal(DrawCommandType.Text, command.Type);
+        Assert.Equal([25f, 40], frame.Geometry);
+        Assert.Equal((ushort)DrawCommandFlags.AlignCenter, command.Flags);
+        Assert.Equal((int)FontIndex.Heading, frame.TextStyles[command.StyleIndex].Font);
+        Assert.Equal(["A"], frame.Strings);
+    }
+
+    [Fact]
+    public void CenteredTextRejectsEmptyRectangles()
+    {
+        var canvas = new Canvas(100, 100);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", 0, 0, 0, 10, Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", 0, 0, 10, -1, Red));
+    }
+
+    [Fact]
     public void RejectsDegenerateShapes()
     {
         var canvas = new Canvas(100, 100);

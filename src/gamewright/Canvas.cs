@@ -48,6 +48,22 @@ public sealed class Canvas
         TextAlignment alignment = TextAlignment.Start) =>
         builder.AddText(text, x, y, color, font, alignment);
 
+    /// <summary>Draws text centred horizontally and vertically in a rectangle.</summary>
+    public void DrawTextCentered(
+        string text,
+        float x,
+        float y,
+        float width,
+        float height,
+        Color color,
+        FontIndex font = FontIndex.Body)
+    {
+        if (!(width > 0) || !(height > 0))
+            throw new ArgumentOutOfRangeException(nameof(width), "Rectangle dimensions must be positive.");
+
+        DrawText(text, x + width / 2, y + height / 2, color, font, TextAlignment.Center);
+    }
+
     /// <summary>Draws one cell of the sprite sheet (see <see cref="SpriteSheet"/>) scaled into the rectangle.</summary>
     public void DrawSprite(int spriteIndex, float x, float y, float width, float height) =>
         builder.AddSprite(spriteIndex, x, y, width, height);
