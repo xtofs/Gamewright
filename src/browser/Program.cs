@@ -14,7 +14,7 @@ internal class Program
         while (true)
         {
             StopwatchSample.Render();
-            await Task.Delay(1000 / 30);
+            await Task.Delay(100);
         }
     }
 }
@@ -116,12 +116,19 @@ partial class StopwatchSample
         Api.SendStatic(builder.Build());
     }
 
+    // Everything in the dynamic frame is a function of the whole elapsed second.
+    private static int renderedSecond = -1;
+
     public static void Render()
     {
+        var elapsedSeconds = (int)stopwatch.Elapsed.TotalSeconds;
+        if (elapsedSeconds == renderedSecond)
+            return;
+        renderedSecond = elapsedSeconds;
+
         var builder = new FrameBuilder();
-        var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-        var selectedFile = (int)(elapsedSeconds / 2) % 8;
-        var selectedColor = (int)elapsedSeconds % 2 == 0
+        var selectedFile = elapsedSeconds / 2 % 8;
+        var selectedColor = elapsedSeconds % 2 == 0
             ? new Color(231, 194, 77, 140)
             : new Color(231, 194, 77, 80);
         builder.AddPath(
@@ -183,6 +190,7 @@ partial class StopwatchSample
         else
             stopwatch.Reset();
 
+        renderedSecond = -1;
         Render();
     }
 
