@@ -29,7 +29,6 @@
       touch-action: manipulation;
       display: block;
       width: 100%;
-      height: auto;
       border: 1px solid #52617a;
       border-radius: 0.5rem;
     }
@@ -75,7 +74,7 @@
     <h1>Gamewright Frame Renderer</h1>
     <p>Click one of your pieces, then click any square to move it there. Moves are not checked against the rules of chess.</p>
     <p id="error" role="alert" hidden></p>
-    <!-- The width and height are a placeholder until ChessGame.FrameWidth/FrameHeight arrive. -->
+    <!-- The width and height only reserve space until the first frame; the host supplies the frame size. -->
     <canvas id="surface" width="640" height="620" aria-label="Chess board. Click a piece, then a destination square."></canvas>
     <dl id="stats" aria-label="Rendering statistics">
       <div><dt>FPS (renders / s)</dt><dd id="stat-fps">0</dd></div>

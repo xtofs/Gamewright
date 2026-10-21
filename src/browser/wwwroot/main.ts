@@ -87,7 +87,6 @@ function getRequiredElement<T extends HTMLElement>(id: string): T {
     return element as T;
 }
 
-// Sizes the backing store to the displayed size and returns the logical-to-pixel scale.
 function getRequiredContext(target: HTMLCanvasElement): CanvasRenderingContext2D {
     const result = target.getContext('2d');
     if (!result) {
@@ -96,19 +95,37 @@ function getRequiredContext(target: HTMLCanvasElement): CanvasRenderingContext2D
     return result;
 }
 
-function resizeCanvas(target: HTMLCanvasElement): number {
+// Where the frame sits on the canvas, in device pixels: one uniform scale, centred, so the
+// frame never distorts whatever shape the canvas box has. Updated by resizeCanvas.
+const view = { scale: 1, offsetX: 0, offsetY: 0 };
+
+// Sizes the backing store to the displayed box and fits the frame inside it (letterbox).
+function resizeCanvas(target: HTMLCanvasElement): void {
     if (frameWidth === 0 || frameHeight === 0) {
         throw new Error('The frame size was not configured.');
     }
     const ratio = window.devicePixelRatio || 1;
     const width = Math.round(target.clientWidth * ratio);
-    const height = Math.round(target.clientWidth * ratio * frameHeight / frameWidth);
+    const height = Math.round(target.clientHeight * ratio);
 
     if (target.width !== width || target.height !== height) {
         target.width = width;
         target.height = height;
     }
-    return width / frameWidth;
+    view.scale = Math.min(width / frameWidth, height / frameHeight);
+    view.offsetX = (width - frameWidth * view.scale) / 2;
+    view.offsetY = (height - frameHeight * view.scale) / 2;
+}
+
+// Converts a pointer position (client CSS pixels) to frame coordinates.
+function toFrameCoordinates(clientX: number, clientY: number): { x: number, y: number } {
+    const bounds = canvas.getBoundingClientRect();
+    const deviceX = (clientX - bounds.left - canvas.clientLeft) * canvas.width / canvas.clientWidth;
+    const deviceY = (clientY - bounds.top - canvas.clientTop) * canvas.height / canvas.clientHeight;
+    return {
+        x: (deviceX - view.offsetX) / view.scale,
+        y: (deviceY - view.offsetY) / view.scale
+    };
 }
 
 // Counters for the stats panel; the per-second ones are reset each time the panel updates.
@@ -166,10 +183,10 @@ function renderScene(): void {
 }
 
 function drawScene(): void {
-    const scale = resizeCanvas(canvas);
+    resizeCanvas(canvas);
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.setTransform(scale, 0, 0, scale, 0, 0);
+    context.setTransform(view.scale, 0, 0, view.scale, view.offsetX, view.offsetY);
 
     if (staticFrame) {
         if (staticCacheWidth !== canvas.width || staticCacheHeight !== canvas.height) {
@@ -177,7 +194,7 @@ function drawScene(): void {
             staticCanvas.height = canvas.height;
             staticCacheWidth = canvas.width;
             staticCacheHeight = canvas.height;
-            staticContext.setTransform(scale, 0, 0, scale, 0, 0);
+            staticContext.setTransform(view.scale, 0, 0, view.scale, view.offsetX, view.offsetY);
             drawCommands(staticContext, staticFrame);
         }
         context.save();
@@ -512,9 +529,8 @@ function decodeFrame(
 function configureFrame(width: number, height: number): void {
     frameWidth = width;
     frameHeight = height;
-    // Gives the canvas its aspect ratio before the first frame is drawn.
-    canvas.width = width;
-    canvas.height = height;
+    // The canvas box defaults to the frame's shape; a page may give it any other shape.
+    canvas.style.aspectRatio = `${width} / ${height}`;
 }
 
 function configureSprites(columns: number, cellSize: number): void {
@@ -559,6 +575,13 @@ function submitFrame(
 
 setInterval(updateStats, 1000);
 
+// Redraw when the canvas box changes size, e.g. when the window is resized.
+new ResizeObserver(() => {
+    if (frameWidth !== 0 && (staticFrame || dynamicFrame)) {
+        renderScene();
+    }
+}).observe(canvas);
+
 try {
     const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet.create();
 
@@ -571,12 +594,9 @@ try {
 
     // Clicks are sent in the frame's logical coordinate space; C# decides what they hit.
     canvas.addEventListener('pointerdown', (event) => {
-        const bounds = canvas.getBoundingClientRect();
         try {
-            exports.ChessGame.Click(
-                (event.clientX - bounds.left) * frameWidth / bounds.width,
-                (event.clientY - bounds.top) * frameHeight / bounds.height
-            );
+            const { x, y } = toFrameCoordinates(event.clientX, event.clientY);
+            exports.ChessGame.Click(x, y);
         } catch (error) {
             reportError(error instanceof Error ? error.message : String(error));
         }
