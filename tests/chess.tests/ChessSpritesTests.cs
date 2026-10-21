@@ -1,9 +1,10 @@
 using System.Buffers.Binary;
+using Chess;
 using Gamewright;
 
-namespace Gamewright.Tests;
+namespace Chess.Tests;
 
-public class SpriteSheetTests
+public class ChessSpritesTests
 {
     private static string SpritePath()
     {
@@ -23,16 +24,16 @@ public class SpriteSheetTests
         using (var stream = File.OpenRead(SpritePath()))
             stream.ReadExactly(header);
 
-        Assert.Equal(SpriteSheet.Width, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(16, 4)));
-        Assert.Equal(SpriteSheet.Height, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(20, 4)));
+        Assert.Equal(ChessSprites.Sheet.Width, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(16, 4)));
+        Assert.Equal(ChessSprites.Sheet.Height, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(20, 4)));
     }
 
     [Fact]
     public void IndexCountsRowByRow()
     {
-        Assert.Equal(0, SpriteSheet.Index(0, 0));
-        Assert.Equal(SpriteSheet.Columns, SpriteSheet.Index(1, 0));
-        Assert.Equal(SpriteSheet.Columns * SpriteSheet.Rows - 1, SpriteSheet.Index(SpriteSheet.Rows - 1, SpriteSheet.Columns - 1));
+        Assert.Equal(0, ChessSprites.Sheet.Index(0, 0));
+        Assert.Equal(ChessSprites.Sheet.Columns, ChessSprites.Sheet.Index(1, 0));
+        Assert.Equal(ChessSprites.Sheet.Count - 1, ChessSprites.Sheet.Index(ChessSprites.Sheet.Rows - 1, ChessSprites.Sheet.Columns - 1));
     }
 
     [Fact]
@@ -43,7 +44,7 @@ public class SpriteSheetTests
                        select ChessSprites.Index(color, kind)).ToArray();
 
         Assert.Equal(12, indices.Distinct().Count());
-        Assert.All(indices, index => Assert.InRange(index, 0, SpriteSheet.Columns * SpriteSheet.Rows - 1));
+        Assert.All(indices, index => Assert.InRange(index, 0, ChessSprites.Sheet.Count - 1));
     }
 
     [Fact]

@@ -1,4 +1,6 @@
-namespace Gamewright;
+namespace Chess;
+
+using Gamewright;
 
 /// <summary>A board square. File 0 is the a-file; rank 0 is the top row, where Black starts.</summary>
 public readonly record struct Square(int File, int Rank)

@@ -1,4 +1,6 @@
-namespace Gamewright;
+namespace Chess;
+
+using Gamewright;
 
 public enum PieceKind
 {

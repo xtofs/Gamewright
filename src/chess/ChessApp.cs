@@ -1,4 +1,6 @@
-namespace Gamewright;
+namespace Chess;
+
+using Gamewright;
 
 /// <summary>A click-to-move chess board drawn with a <see cref="Canvas"/>; see <see cref="ChessBoard"/> for the rules (there are none).</summary>
 public sealed class ChessApp : GameApp
@@ -21,7 +23,7 @@ public sealed class ChessApp : GameApp
 
     private ChessBoard board = ChessBoard.NewGame();
 
-    public ChessApp() : base(Width, Height)
+    public ChessApp() : base(Width, Height, ChessSprites.Sheet)
     {
     }
 
@@ -53,9 +55,13 @@ public sealed class ChessApp : GameApp
         {
             // File letters sit in the frame margin under each column, rank numbers in the margin beside each row.
             canvas.DrawTextCentered(
-                ((char)('a' + index)).ToString(), BoardX + index * CellSize, BoardY + BoardSize, CellSize, FrameMargin, Ink);
+                ((char)('a' + index)).ToString(),
+                new Rect(BoardX + index * CellSize, BoardY + BoardSize, CellSize, FrameMargin),
+                Ink);
             canvas.DrawTextCentered(
-                (ChessBoard.Size - index).ToString(), BoardX - FrameMargin, BoardY + index * CellSize, FrameMargin, CellSize, Ink);
+                (ChessBoard.Size - index).ToString(),
+                new Rect(BoardX - FrameMargin, BoardY + index * CellSize, FrameMargin, CellSize),
+                Ink);
         }
         canvas.DrawText("GAMEWRIGHT  /  CHESS", BoardX, 43, Ink, FontIndex.Heading);
     }

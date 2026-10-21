@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices.JavaScript;
+using Chess;
 using Gamewright;
 
 // Hosts the chess app in the page: sends its frames to the renderer and forwards input from
@@ -10,6 +11,8 @@ partial class AppHost
     public static int FrameWidth => app.FrameWidth;
 
     public static int FrameHeight => app.FrameHeight;
+
+    public static SpriteSheetLayout? SpriteSheet => app.SpriteSheet;
 
     public static void Render(Invalidation invalidation)
     {

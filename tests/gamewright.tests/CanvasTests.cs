@@ -108,7 +108,7 @@ public class CanvasTests
     public void CenteredTextIsDrawnAtTheRectangleCentreWithCentreAlignment()
     {
         var canvas = new Canvas(100, 100);
-        canvas.DrawTextCentered("A", 10, 20, 30, 40, Red, FontIndex.Heading);
+        canvas.DrawTextCentered("A", new Rect(10, 20, 30, 40), Red, FontIndex.Heading);
 
         var frame = canvas.Build();
         var command = Assert.Single(frame.Commands);
@@ -124,8 +124,8 @@ public class CanvasTests
     {
         var canvas = new Canvas(100, 100);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", 0, 0, 0, 10, Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", 0, 0, 10, -1, Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", new Rect(0, 0, 0, 10), Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawTextCentered("A", new Rect(0, 0, 10, -1), Red));
     }
 
     [Fact]

@@ -51,20 +51,19 @@ public sealed class Canvas
     /// <summary>Draws text centred horizontally and vertically in a rectangle.</summary>
     public void DrawTextCentered(
         string text,
-        float x,
-        float y,
-        float width,
-        float height,
+        Rect rect,
         Color color,
         FontIndex font = FontIndex.Body)
     {
-        if (!(width > 0) || !(height > 0))
-            throw new ArgumentOutOfRangeException(nameof(width), "Rectangle dimensions must be positive.");
+        if (!(rect.Width > 0) || !(rect.Height > 0))
+        {
+            throw new ArgumentOutOfRangeException(nameof(rect), "Rectangle dimensions must be positive.");
+        }
 
-        DrawText(text, x + width / 2, y + height / 2, color, font, TextAlignment.Center);
+        DrawText(text, rect.X + rect.Width / 2, rect.Y + rect.Height / 2, color, font, TextAlignment.Center);
     }
 
-    /// <summary>Draws one cell of the sprite sheet (see <see cref="SpriteSheet"/>) scaled into the rectangle.</summary>
+    /// <summary>Draws one cell of the sprite sheet (see <see cref="SpriteSheetLayout"/>) scaled into the rectangle.</summary>
     public void DrawSprite(int spriteIndex, float x, float y, float width, float height) =>
         builder.AddSprite(spriteIndex, x, y, width, height);
 

@@ -7,7 +7,8 @@ internal class Program
         try
         {
             Api.ConfigureFrame(AppHost.FrameWidth, AppHost.FrameHeight);
-            Api.ConfigureSprites(SpriteSheet.Columns, SpriteSheet.CellSize);
+            if (AppHost.SpriteSheet is { } sheet)
+                Api.ConfigureSprites(sheet.Columns, sheet.CellSize);
             AppHost.Render(Invalidation.All);
         }
         catch (Exception exception)

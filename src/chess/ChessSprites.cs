@@ -1,8 +1,12 @@
-namespace Gamewright;
+namespace Chess;
 
-/// <summary>Where the chess pieces are on the sprite sheet: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
+using Gamewright;
+
+/// <summary>The chess sprite sheet (<c>sprites.png</c>) and where the pieces are on it: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
 public static class ChessSprites
 {
+    public static readonly SpriteSheetLayout Sheet = new(columns: 7, rows: 4, cellSize: 200);
+
     private const int WhiteRow = 2;
     private const int BlackRow = 3;
 
@@ -13,6 +17,6 @@ public static class ChessSprites
         if (!Enum.IsDefined(kind))
             throw new ArgumentOutOfRangeException(nameof(kind));
 
-        return SpriteSheet.Index(color == PieceColor.White ? WhiteRow : BlackRow, (int)kind);
+        return Sheet.Index(color == PieceColor.White ? WhiteRow : BlackRow, (int)kind);
     }
 }

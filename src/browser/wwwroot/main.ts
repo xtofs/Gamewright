@@ -208,7 +208,7 @@ function drawScene(): void {
             staticCacheWidth = canvas.width;
             staticCacheHeight = canvas.height;
             staticContext.setTransform(view.scale, 0, 0, view.scale, view.offsetX, view.offsetY);
-            drawCommands(staticContext, staticFrame);
+            drawFrame(staticContext, staticFrame);
         }
         context.save();
         context.setTransform(1, 0, 0, 1, 0, 0);
@@ -217,11 +217,11 @@ function drawScene(): void {
     }
 
     if (dynamicFrame) {
-        drawCommands(context, dynamicFrame);
+        drawFrame(context, dynamicFrame);
     }
 }
 
-function drawCommands(target: CanvasRenderingContext2D, frame: Frame): void {
+function drawFrame(target: CanvasRenderingContext2D, frame: Frame): void {
     for (const command of frame.commands) {
         switch (command.type) {
             case DrawCommandType.Path:

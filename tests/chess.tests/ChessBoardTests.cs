@@ -1,6 +1,7 @@
+using Chess;
 using Gamewright;
 
-namespace Gamewright.Tests;
+namespace Chess.Tests;
 
 public class ChessBoardTests
 {
