@@ -51,19 +51,9 @@ type Frame = {
 
 const fonts = ['16px system-ui', '600 24px system-ui'];
 const canvas = getRequiredElement<HTMLCanvasElement>('surface');
-const context = canvas.getContext('2d');
-
-if (!context) {
-    throw new Error('The browser does not provide a 2D canvas context.');
-}
-const drawingContext: CanvasRenderingContext2D = context;
+const context = getRequiredContext(canvas);
 const staticCanvas = document.createElement('canvas');
-const staticContext = staticCanvas.getContext('2d');
-
-if (!staticContext) {
-    throw new Error('The browser does not provide a 2D offscreen canvas context.');
-}
-const staticDrawingContext: CanvasRenderingContext2D = staticContext;
+const staticContext = getRequiredContext(staticCanvas);
 
 // Frames are authored in this coordinate space and scaled to the canvas.
 const LogicalWidth = 640;
@@ -97,6 +87,14 @@ function getRequiredElement<T extends HTMLElement>(id: string): T {
 }
 
 // Sizes the backing store to the displayed size and returns the logical-to-pixel scale.
+function getRequiredContext(target: HTMLCanvasElement): CanvasRenderingContext2D {
+    const result = target.getContext('2d');
+    if (!result) {
+        throw new Error('The browser does not provide a 2D canvas context.');
+    }
+    return result;
+}
+
 function resizeCanvas(target: HTMLCanvasElement): number {
     const ratio = window.devicePixelRatio || 1;
     const width = Math.round(target.clientWidth * ratio);
@@ -111,9 +109,9 @@ function resizeCanvas(target: HTMLCanvasElement): number {
 
 function renderScene(): void {
     const scale = resizeCanvas(canvas);
-    drawingContext.setTransform(1, 0, 0, 1, 0, 0);
-    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
-    drawingContext.setTransform(scale, 0, 0, scale, 0, 0);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.setTransform(scale, 0, 0, scale, 0, 0);
 
     if (staticFrame) {
         if (staticCacheWidth !== canvas.width || staticCacheHeight !== canvas.height) {
@@ -121,17 +119,17 @@ function renderScene(): void {
             staticCanvas.height = canvas.height;
             staticCacheWidth = canvas.width;
             staticCacheHeight = canvas.height;
-            staticDrawingContext.setTransform(scale, 0, 0, scale, 0, 0);
-            drawCommands(staticDrawingContext, staticFrame);
+            staticContext.setTransform(scale, 0, 0, scale, 0, 0);
+            drawCommands(staticContext, staticFrame);
         }
-        drawingContext.save();
-        drawingContext.setTransform(1, 0, 0, 1, 0, 0);
-        drawingContext.drawImage(staticCanvas, 0, 0);
-        drawingContext.restore();
+        context.save();
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.drawImage(staticCanvas, 0, 0);
+        context.restore();
     }
 
     if (dynamicFrame) {
-        drawCommands(drawingContext, dynamicFrame);
+        drawCommands(context, dynamicFrame);
     }
 }
 
@@ -481,15 +479,13 @@ try {
     const exports = await getAssemblyExports(config.mainAssemblyName);
     const pauseButton = getRequiredElement<HTMLButtonElement>('pause');
 
-    getRequiredElement<HTMLButtonElement>('reset').addEventListener('click', (event) => {
-        exports.StopwatchSample.Reset();
-        event.preventDefault();
+    getRequiredElement<HTMLButtonElement>('reset').addEventListener('click', () => {
+        exports.ChessSample.Reset();
     });
 
-    pauseButton.addEventListener('click', (event) => {
-        const isRunning = exports.StopwatchSample.Toggle();
-        pauseButton.innerText = isRunning ? 'Pause' : 'Start';
-        event.preventDefault();
+    pauseButton.addEventListener('click', () => {
+        const isRunning = exports.ChessSample.Toggle();
+        pauseButton.textContent = isRunning ? 'Pause' : 'Start';
     });
 
     await runMain();

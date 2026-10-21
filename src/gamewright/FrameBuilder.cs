@@ -14,10 +14,6 @@ public sealed class FrameBuilder
         StrokeStyle? strokeStyle = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (fillColor is null && strokeStyle is null)
-            throw new ArgumentException("A path must have a fill or stroke style.", nameof(path));
-        if (strokeStyle is { Width: <= 0 })
-            throw new ArgumentOutOfRangeException(nameof(strokeStyle), "Stroke width must be positive.");
 
         var parsed = SvgPathParser.Parse(path);
         AddPath(parsed.PathData, parsed.Geometry, fillColor, strokeStyle, parsed.Closed);
@@ -79,7 +75,7 @@ public sealed class FrameBuilder
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Sprite dimensions must be positive.");
 
-        ValidateGeometry(x, y, width, height);
+        ValidateGeometry([x, y, width, height]);
         var geometryOffset = AddGeometry([x, y, width, height]);
         var styleIndex = AddStyle(default);
         commands.Add(new DrawCommand(DrawCommandType.Image, styleIndex, 0, geometryOffset, 4, 0, 0, spriteIndex));
@@ -98,7 +94,7 @@ public sealed class FrameBuilder
         if (!Enum.IsDefined(font))
             throw new ArgumentOutOfRangeException(nameof(font));
 
-        ValidateGeometry(x, y);
+        ValidateGeometry([x, y]);
         var stringIndex = AddString(text);
         var geometryOffset = AddGeometry([x, y]);
         var styleIndex = AddStyle(new Style(fillColor.Rgba, 0, 0, (int)font));
@@ -135,10 +131,13 @@ public sealed class FrameBuilder
         return offset;
     }
 
-    private static void ValidateGeometry(params float[] values)
+    private static void ValidateGeometry(ReadOnlySpan<float> values)
     {
-        if (Array.Exists(values, static value => !float.IsFinite(value)))
-            throw new ArgumentOutOfRangeException(nameof(values), "Geometry values must be finite.");
+        foreach (var value in values)
+        {
+            if (!float.IsFinite(value))
+                throw new ArgumentOutOfRangeException(nameof(values), "Geometry values must be finite.");
+        }
     }
 
     private ushort AddStyle(Style style)

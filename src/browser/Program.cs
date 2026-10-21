@@ -8,14 +8,14 @@ internal class Program
     private static async Task Main(string[] args)
     {
         if (args.Length == 1 && args[0] == "start")
-            StopwatchSample.Start();
+            ChessSample.Start();
 
         try
         {
-            StopwatchSample.RenderStatic();
+            ChessSample.RenderStatic();
             while (true)
             {
-                StopwatchSample.Render();
+                ChessSample.Render();
                 await Task.Delay(100);
             }
         }
@@ -80,7 +80,7 @@ partial class Api
         MemoryMarshal.AsBytes(styles.AsSpan()).ToArray().Select(static value => (int)value).ToArray();
 }
 
-partial class StopwatchSample
+partial class ChessSample
 {
     private static readonly Stopwatch stopwatch = new();
     private const float BoardX = 112;
