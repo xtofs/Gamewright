@@ -2,21 +2,30 @@ using System.Runtime.InteropServices.JavaScript;
 using Gamewright;
 
 // Hosts a GameApp in the page: sends its frames to the renderer and forwards input from main.ts.
-// Only the frames named by an Invalidation are drawn and sent again.
+// Only the frames named by an Invalidation are drawn and sent again. The imports from JavaScript
+// are in AppHost.Interop.cs.
 partial class AppHost
 {
     private static GameApp? app;
 
-    /// <summary>Configures the renderer for the app and draws its first frames.</summary>
+    /// <summary>Configures the renderer for the app and draws its first frames. Failures are shown on the page.</summary>
     public static void Start(GameApp gameApp)
     {
         ArgumentNullException.ThrowIfNull(gameApp);
-        app = gameApp;
 
-        Api.ConfigureFrame(gameApp.FrameWidth, gameApp.FrameHeight);
-        if (gameApp.SpriteSheet is { } sheet)
-            Api.ConfigureSprites(sheet.ImagePath, sheet.Columns, sheet.CellSize);
-        Render(Invalidation.All);
+        try
+        {
+            app = gameApp;
+            ConfigureFrame(gameApp.FrameWidth, gameApp.FrameHeight);
+            if (gameApp.SpriteSheet is { } sheet)
+                ConfigureSprites(sheet.ImagePath, sheet.Columns, sheet.CellSize);
+            Render(Invalidation.All);
+        }
+        catch (Exception exception)
+        {
+            ReportError(exception.ToString());
+            throw;
+        }
     }
 
     /// <summary>Handles a click at a frame-space position.</summary>
@@ -29,8 +38,8 @@ partial class AppHost
     private static void Render(Invalidation invalidation)
     {
         if (invalidation.HasFlag(Invalidation.Static))
-            Api.SendStatic(Running.RenderStatic());
+            SendFrame(true, Running.RenderStatic());
         if (invalidation.HasFlag(Invalidation.Dynamic))
-            Api.SendDynamic(Running.RenderDynamic());
+            SendFrame(false, Running.RenderDynamic());
     }
 }
