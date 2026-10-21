@@ -56,7 +56,7 @@ const staticCanvas = document.createElement('canvas');
 const staticContext = getRequiredContext(staticCanvas);
 
 // Frames are authored in this coordinate space and scaled to the canvas. The host
-// supplies the size (ChessGame.FrameWidth/FrameHeight) before the first frame.
+// supplies the size (AppHost.FrameWidth/FrameHeight) before the first frame.
 let frameWidth = 0;
 let frameHeight = 0;
 
@@ -596,14 +596,14 @@ try {
     canvas.addEventListener('pointerdown', (event) => {
         try {
             const { x, y } = toFrameCoordinates(event.clientX, event.clientY);
-            exports.ChessGame.Click(x, y);
+            exports.AppHost.Click(x, y);
         } catch (error) {
             reportError(error instanceof Error ? error.message : String(error));
         }
     });
 
     getRequiredElement<HTMLButtonElement>('new-game').addEventListener('click', () => {
-        exports.ChessGame.NewGame();
+        exports.AppHost.NewGame();
     });
 
     await runMain();

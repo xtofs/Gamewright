@@ -3,7 +3,7 @@ declare module '*_framework/dotnet.js' {
         create(): Promise<{
             setModuleImports(moduleName: string, imports: Record<string, unknown>): void;
             getAssemblyExports(assemblyName: string): Promise<{
-                ChessGame: {
+                AppHost: {
                     Click(x: number, y: number): void;
                     NewGame(): void;
                 };

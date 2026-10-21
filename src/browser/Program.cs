@@ -6,10 +6,9 @@ internal class Program
     {
         try
         {
-            Api.ConfigureFrame(ChessGame.FrameWidth, ChessGame.FrameHeight);
+            Api.ConfigureFrame(AppHost.FrameWidth, AppHost.FrameHeight);
             Api.ConfigureSprites(SpriteSheet.Columns, SpriteSheet.CellSize);
-            ChessGame.RenderStatic();
-            ChessGame.Render();
+            AppHost.Render(Invalidation.All);
         }
         catch (Exception exception)
         {
