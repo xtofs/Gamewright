@@ -10,11 +10,19 @@ internal class Program
         if (args.Length == 1 && args[0] == "start")
             StopwatchSample.Start();
 
-        StopwatchSample.RenderStatic();
-        while (true)
+        try
         {
-            StopwatchSample.Render();
-            await Task.Delay(100);
+            StopwatchSample.RenderStatic();
+            while (true)
+            {
+                StopwatchSample.Render();
+                await Task.Delay(100);
+            }
+        }
+        catch (Exception exception)
+        {
+            Api.ReportError(exception.ToString());
+            throw;
         }
     }
 }
@@ -36,6 +44,9 @@ partial class Api
         [JSMarshalAs<JSType.Array<JSType.Number>>] double[] geometry,
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings,
         [JSMarshalAs<JSType.Array<JSType.Number>>] int[] styles);
+
+    [JSImport("dom.reportError", "main.js")]
+    internal static partial void ReportError(string message);
 
     internal static void SendStatic(Frame frame) => SubmitStatic(
         EncodeCommands(frame.Commands),

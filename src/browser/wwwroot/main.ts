@@ -438,6 +438,12 @@ function decodeFrame(
     };
 }
 
+function reportError(message: string): void {
+    const element = getRequiredElement<HTMLElement>('error');
+    element.textContent = message;
+    element.hidden = false;
+}
+
 function submitStatic(
     commands: number[],
     pathData: number[],
@@ -462,27 +468,32 @@ function submitDynamic(
     renderScene();
 }
 
-const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet
-    .withApplicationArguments('start')
-    .create();
+try {
+    const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet
+        .withApplicationArguments('start')
+        .create();
 
-setModuleImports('main.js', {
-    dom: { submitStatic, submitDynamic }
-});
+    setModuleImports('main.js', {
+        dom: { submitStatic, submitDynamic, reportError }
+    });
 
-const config = getConfig();
-const exports = await getAssemblyExports(config.mainAssemblyName);
-const pauseButton = getRequiredElement<HTMLButtonElement>('pause');
+    const config = getConfig();
+    const exports = await getAssemblyExports(config.mainAssemblyName);
+    const pauseButton = getRequiredElement<HTMLButtonElement>('pause');
 
-getRequiredElement<HTMLButtonElement>('reset').addEventListener('click', (event) => {
-    exports.StopwatchSample.Reset();
-    event.preventDefault();
-});
+    getRequiredElement<HTMLButtonElement>('reset').addEventListener('click', (event) => {
+        exports.StopwatchSample.Reset();
+        event.preventDefault();
+    });
 
-pauseButton.addEventListener('click', (event) => {
-    const isRunning = exports.StopwatchSample.Toggle();
-    pauseButton.innerText = isRunning ? 'Pause' : 'Start';
-    event.preventDefault();
-});
+    pauseButton.addEventListener('click', (event) => {
+        const isRunning = exports.StopwatchSample.Toggle();
+        pauseButton.innerText = isRunning ? 'Pause' : 'Start';
+        event.preventDefault();
+    });
 
-await runMain();
+    await runMain();
+} catch (error) {
+    reportError(error instanceof Error ? error.message : String(error));
+    throw error;
+}

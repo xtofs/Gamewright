@@ -32,6 +32,14 @@
       border-radius: 0.5rem;
     }
 
+    #error {
+      white-space: pre-wrap;
+      padding: 0.5rem 1rem;
+      border: 1px solid #c0504d;
+      border-radius: 0.5rem;
+      color: #ffb3b0;
+    }
+
     button {
       margin: 1rem 0.5rem 0 0;
       padding: 0.5rem 1rem;
@@ -43,6 +51,7 @@
   <main>
     <h1>Gamewright Frame Renderer</h1>
     <p>The board is cached as a static frame; animated pieces and highlights are updated independently.</p>
+    <p id="error" role="alert" hidden></p>
     <canvas id="surface" width="640" height="620" aria-label="Animated chess board canvas"></canvas>
     <button id="pause" type="button">Pause</button>
     <button id="reset" type="button">Reset</button>
