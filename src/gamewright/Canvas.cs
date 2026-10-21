@@ -21,34 +21,22 @@ public sealed class Canvas
 
     public int Height { get; }
 
-    public void FillRectangle(float x, float y, float width, float height, Color color) =>
-        builder.AddPath(Rectangle(x, y, width, height), Paint.Fill(color));
+    /// <summary>Draws a rectangle; the paint says whether it is filled, stroked or both, and in which order.</summary>
+    public void DrawRectangle(float x, float y, float width, float height, Paint paint) =>
+        builder.AddPath(Rectangle(x, y, width, height), paint);
 
-    public void StrokeRectangle(float x, float y, float width, float height, StrokeStyle stroke) =>
-        builder.AddPath(Rectangle(x, y, width, height), stroke);
-
-    public void FillCircle(float centerX, float centerY, float radius, Color color) =>
-        builder.AddPath(Circle(centerX, centerY, radius), Paint.Fill(color));
-
-    public void StrokeCircle(float centerX, float centerY, float radius, StrokeStyle stroke) =>
-        builder.AddPath(Circle(centerX, centerY, radius), stroke);
+    public void DrawCircle(float centerX, float centerY, float radius, Paint paint) =>
+        builder.AddPath(Circle(centerX, centerY, radius), paint);
 
     public void DrawLine(float x1, float y1, float x2, float y2, StrokeStyle stroke) =>
         builder.AddPath(path => path.MoveTo(x1, y1).LineTo(x2, y2), stroke);
 
-    public void FillPath(Action<PathBuilder> buildPath, Color color) =>
-        builder.AddPath(buildPath, Paint.Fill(color));
+    public void DrawPath(Action<PathBuilder> buildPath, Paint paint) =>
+        builder.AddPath(buildPath, paint);
 
-    public void StrokePath(Action<PathBuilder> buildPath, StrokeStyle stroke) =>
-        builder.AddPath(buildPath, stroke);
-
-    /// <summary>Fills SVG path data such as <c>"M0 0 L10 0 L10 10 Z"</c>.</summary>
-    public void FillPath(string svgPath, Color color) =>
-        builder.AddPath(svgPath, Paint.Fill(color));
-
-    /// <summary>Strokes SVG path data such as <c>"M0 0 L10 0 L10 10"</c>.</summary>
-    public void StrokePath(string svgPath, StrokeStyle stroke) =>
-        builder.AddPath(svgPath, stroke);
+    /// <summary>Draws SVG path data such as <c>"M0 0 L10 0 L10 10 Z"</c>.</summary>
+    public void DrawPath(string svgPath, Paint paint) =>
+        builder.AddPath(svgPath, paint);
 
     /// <summary>Draws text with its vertical middle at <paramref name="y"/>.</summary>
     public void DrawText(

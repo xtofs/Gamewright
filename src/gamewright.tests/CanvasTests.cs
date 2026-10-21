@@ -28,7 +28,7 @@ public class CanvasTests
     public void FillRectangleRecordsAFilledClosedPath()
     {
         var canvas = new Canvas(100, 100);
-        canvas.FillRectangle(10, 20, 30, 40, Red);
+        canvas.DrawRectangle(10, 20, 30, 40, Red);
 
         var frame = canvas.Build();
         var command = Assert.Single(frame.Commands);
@@ -43,7 +43,7 @@ public class CanvasTests
     public void StrokeRectangleRecordsAStrokedPath()
     {
         var canvas = new Canvas(100, 100);
-        canvas.StrokeRectangle(0, 0, 10, 10, Outline);
+        canvas.DrawRectangle(0, 0, 10, 10, Outline);
 
         var frame = canvas.Build();
         var command = Assert.Single(frame.Commands);
@@ -56,7 +56,7 @@ public class CanvasTests
     public void CircleIsTwoHalfArcsThroughTheLeftAndRightPoints()
     {
         var canvas = new Canvas(100, 100);
-        canvas.FillCircle(50, 40, 10, Red);
+        canvas.DrawCircle(50, 40, 10, Red);
 
         var frame = canvas.Build();
         Assert.Equal([PathOpcode.MoveTo, PathOpcode.ArcTo, PathOpcode.ArcTo, PathOpcode.ClosePath], Ops(frame));
@@ -82,8 +82,8 @@ public class CanvasTests
     public void PathsCanBeBuiltOrParsed()
     {
         var canvas = new Canvas(100, 100);
-        canvas.FillPath(path => path.MoveTo(0, 0).LineTo(5, 5).LineTo(0, 5).Close(), Red);
-        canvas.StrokePath("M0 0 L5 5", Outline);
+        canvas.DrawPath(path => path.MoveTo(0, 0).LineTo(5, 5).LineTo(0, 5).Close(), Red);
+        canvas.DrawPath("M0 0 L5 5", Outline);
 
         Assert.Equal(2, canvas.Build().Commands.Length);
     }
@@ -92,7 +92,7 @@ public class CanvasTests
     public void TextAndSpritesAreRecordedInDrawOrder()
     {
         var canvas = new Canvas(100, 100);
-        canvas.FillRectangle(0, 0, 10, 10, Red);
+        canvas.DrawRectangle(0, 0, 10, 10, Red);
         canvas.DrawSprite(14, 1, 2, 3, 4);
         canvas.DrawText("hi", 5, 6, Red, FontIndex.Heading, TextAlignment.Center);
 
@@ -109,10 +109,35 @@ public class CanvasTests
     {
         var canvas = new Canvas(100, 100);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.FillRectangle(0, 0, 0, 10, Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.StrokeRectangle(0, 0, 10, float.NaN, Outline));
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.FillCircle(5, 5, 0, Red));
-        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.StrokeCircle(5, 5, -1, Outline));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawRectangle(0, 0, 0, 10, Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawRectangle(0, 0, 10, float.NaN, Outline));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawCircle(5, 5, 0, Red));
+        Assert.Throws<ArgumentOutOfRangeException>(() => canvas.DrawCircle(5, 5, -1, Outline));
+    }
+
+    [Fact]
+    public void FillAndStrokeTogetherAreOneCommand()
+    {
+        var canvas = new Canvas(100, 100);
+        canvas.DrawRectangle(0, 0, 10, 10, Paint.Fill(Red).WithStroke(new Color(0, 0, 255), 3));
+        canvas.DrawCircle(5, 5, 4, Paint.Stroke(Red, 1).WithFill(new Color(0, 0, 255)));
+
+        var frame = canvas.Build();
+        Assert.Equal(2, frame.Commands.Length);
+        Assert.Equal(
+            [PaintMode.FillThenStroke, PaintMode.StrokeThenFill],
+            frame.Commands.Select(c => frame.Paints[c.StyleIndex].Mode));
+        Assert.Equal(8, frame.Commands[0].GeometryLength); // the rectangle's four points, once
+    }
+
+    [Fact]
+    public void EmptyPaintCannotBeDrawn()
+    {
+        var canvas = new Canvas(100, 100);
+
+        Assert.Throws<ArgumentException>(() => canvas.DrawRectangle(0, 0, 10, 10, default));
+        Assert.Throws<ArgumentException>(() => canvas.DrawCircle(5, 5, 2, default));
+        Assert.Throws<ArgumentException>(() => canvas.DrawPath("M0 0 L1 1", default));
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public class ChessAppTests
         var frame = new ChessApp().RenderStatic();
 
         Assert.Equal(0, Count(frame, DrawCommandType.Image));
-        Assert.True(Count(frame, DrawCommandType.Path) >= 64);
+        Assert.Equal(66, Count(frame, DrawCommandType.Path)); // border, 64 squares, outline
         Assert.Contains("GAMEWRIGHT  /  CHESS", frame.Strings);
     }
 

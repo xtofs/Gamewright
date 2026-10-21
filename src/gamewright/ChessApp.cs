@@ -35,23 +35,20 @@ public sealed class ChessApp : GameApp
 
     protected override void DrawStatic(Canvas canvas)
     {
-        canvas.FillRectangle(
+        canvas.DrawRectangle(
             BoardX - FrameMargin, BoardY - FrameMargin, BoardSize + 2 * FrameMargin, BoardSize + 2 * FrameMargin,
-            new Color(93, 66, 45));
-        canvas.StrokeRectangle(
-            BoardX - FrameMargin, BoardY - FrameMargin, BoardSize + 2 * FrameMargin, BoardSize + 2 * FrameMargin,
-            new StrokeStyle(new Color(215, 183, 126), 4));
+            Paint.Fill(new Color(93, 66, 45)).WithStroke(new Color(215, 183, 126), 4));
 
         for (var rank = 0; rank < ChessBoard.Size; rank++)
         {
             for (var file = 0; file < ChessBoard.Size; file++)
             {
                 var (x, y) = SquareOrigin(new Square(file, rank));
-                canvas.FillRectangle(x, y, CellSize, CellSize, (rank + file) % 2 == 0 ? LightSquare : DarkSquare);
+                canvas.DrawRectangle(x, y, CellSize, CellSize, (rank + file) % 2 == 0 ? LightSquare : DarkSquare);
             }
         }
 
-        canvas.StrokeRectangle(BoardX, BoardY, BoardSize, BoardSize, new StrokeStyle(new Color(38, 43, 39), 3));
+        canvas.DrawRectangle(BoardX, BoardY, BoardSize, BoardSize, new StrokeStyle(new Color(38, 43, 39), 3));
         for (var index = 0; index < ChessBoard.Size; index++)
         {
             var center = index * CellSize + CellSize / 2;
@@ -103,7 +100,7 @@ public sealed class ChessApp : GameApp
     private static void Highlight(Canvas canvas, Square square, Color color)
     {
         var (x, y) = SquareOrigin(square);
-        canvas.FillRectangle(x, y, CellSize, CellSize, color);
+        canvas.DrawRectangle(x, y, CellSize, CellSize, color);
     }
 
     private static (float X, float Y) SquareOrigin(Square square) =>
