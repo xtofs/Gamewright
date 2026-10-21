@@ -107,7 +107,61 @@ function resizeCanvas(target: HTMLCanvasElement): number {
     return width / LogicalWidth;
 }
 
+// Counters for the stats panel; the per-second ones are reset each time the panel updates.
+const stats = {
+    renders: 0,
+    renderMilliseconds: 0,
+    submits: 0,
+    bytes: 0,
+    totalBytes: 0,
+    lastStaticBytes: 0,
+    lastDynamicBytes: 0
+};
+const textEncoder = new TextEncoder();
+
+function frameByteLength(buffers: Uint8Array[], strings: string[]): number {
+    let length = 0;
+    for (const buffer of buffers) {
+        length += buffer.length;
+    }
+    for (const text of strings) {
+        length += textEncoder.encode(text).length;
+    }
+    return length;
+}
+
+function updateStats(): void {
+    const renderMilliseconds = stats.renders > 0 ? stats.renderMilliseconds / stats.renders : 0;
+    const values: Record<string, string> = {
+        'stat-fps': `${stats.renders}`,
+        'stat-render-ms': renderMilliseconds.toFixed(2),
+        'stat-submits': `${stats.submits}`,
+        'stat-rate': formatBytes(stats.bytes),
+        'stat-static': formatBytes(stats.lastStaticBytes),
+        'stat-dynamic': formatBytes(stats.lastDynamicBytes),
+        'stat-total': formatBytes(stats.totalBytes)
+    };
+    for (const [id, value] of Object.entries(values)) {
+        getRequiredElement<HTMLElement>(id).textContent = value;
+    }
+    stats.renders = 0;
+    stats.renderMilliseconds = 0;
+    stats.submits = 0;
+    stats.bytes = 0;
+}
+
+function formatBytes(bytes: number): string {
+    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+}
+
 function renderScene(): void {
+    const start = performance.now();
+    drawScene();
+    stats.renders++;
+    stats.renderMilliseconds += performance.now() - start;
+}
+
+function drawScene(): void {
     const scale = resizeCanvas(canvas);
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -470,6 +524,16 @@ function submitFrame(
     styles: Uint8Array,
     strings: string[]
 ): void {
+    const byteLength = frameByteLength([commands, pathData, geometry, styles], strings);
+    stats.submits++;
+    stats.bytes += byteLength;
+    stats.totalBytes += byteLength;
+    if (isStatic) {
+        stats.lastStaticBytes = byteLength;
+    } else {
+        stats.lastDynamicBytes = byteLength;
+    }
+
     const frame = decodeFrame(commands, pathData, geometry, styles, strings);
     if (isStatic) {
         staticFrame = frame;
@@ -480,6 +544,8 @@ function submitFrame(
     }
     renderScene();
 }
+
+setInterval(updateStats, 1000);
 
 try {
     const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet

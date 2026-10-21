@@ -40,6 +40,27 @@
       color: #ffb3b0;
     }
 
+    #stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+      gap: 0.5rem 1rem;
+      margin: 1rem 0 0;
+      padding: 0.75rem 1rem;
+      border: 1px solid #52617a;
+      border-radius: 0.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #stats dt {
+      font-size: 0.75rem;
+      color: #9aa8bf;
+    }
+
+    #stats dd {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
     button {
       margin: 1rem 0.5rem 0 0;
       padding: 0.5rem 1rem;
@@ -53,6 +74,15 @@
     <p>The board is cached as a static frame; animated pieces and highlights are updated independently.</p>
     <p id="error" role="alert" hidden></p>
     <canvas id="surface" width="640" height="620" aria-label="Animated chess board canvas"></canvas>
+    <dl id="stats" aria-label="Rendering statistics">
+      <div><dt>FPS (renders / s)</dt><dd id="stat-fps">0</dd></div>
+      <div><dt>Render time (ms)</dt><dd id="stat-render-ms">0</dd></div>
+      <div><dt>Frames sent / s</dt><dd id="stat-submits">0</dd></div>
+      <div><dt>Transferred / s</dt><dd id="stat-rate">0 B</dd></div>
+      <div><dt>Last static frame</dt><dd id="stat-static">0 B</dd></div>
+      <div><dt>Last dynamic frame</dt><dd id="stat-dynamic">0 B</dd></div>
+      <div><dt>Total transferred</dt><dd id="stat-total">0 B</dd></div>
+    </dl>
     <button id="pause" type="button">Pause</button>
     <button id="reset" type="button">Reset</button>
   </main>
