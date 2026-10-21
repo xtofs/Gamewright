@@ -42,8 +42,8 @@
 <body>
   <main>
     <h1>Gamewright Frame Renderer</h1>
-    <p>C# draw commands reference compact geometry and styles; the TypeScript renderer draws each frame to this canvas.</p>
-    <canvas id="surface" width="640" height="240" aria-label="Animated frame canvas"></canvas>
+    <p>The board is cached as a static frame; animated pieces and highlights are updated independently.</p>
+    <canvas id="surface" width="640" height="620" aria-label="Animated chess board canvas"></canvas>
     <button id="pause" type="button">Pause</button>
     <button id="reset" type="button">Reset</button>
   </main>

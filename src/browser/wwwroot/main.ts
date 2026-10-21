@@ -41,7 +41,7 @@ type Style = {
     fontIndex: number;
 };
 
-type RenderFrame = {
+type Frame = {
     commands: DrawCommand[];
     pathData: Uint8Array;
     geometry: Float32Array;
@@ -57,9 +57,36 @@ if (!context) {
     throw new Error('The browser does not provide a 2D canvas context.');
 }
 const drawingContext: CanvasRenderingContext2D = context;
+const staticCanvas = document.createElement('canvas');
+const staticContext = staticCanvas.getContext('2d');
 
-const imageCache = new Map<number, HTMLImageElement>();
-let currentFrame: RenderFrame | undefined;
+if (!staticContext) {
+    throw new Error('The browser does not provide a 2D offscreen canvas context.');
+}
+const staticDrawingContext: CanvasRenderingContext2D = staticContext;
+
+// Frames are authored in this coordinate space and scaled to the canvas.
+const LogicalWidth = 640;
+const LogicalHeight = 620;
+
+// Sprite sheet layout: a grid of square cells; sprite indices count row by row.
+const SheetColumns = 7;
+const SpriteSize = 200;
+
+const spriteSheet = new Image();
+spriteSheet.addEventListener('load', () => {
+    staticCacheWidth = 0;
+    staticCacheHeight = 0;
+    renderScene();
+}, { once: true });
+spriteSheet.addEventListener('error', () => {
+    console.error('Unable to load sprites.png.');
+}, { once: true });
+spriteSheet.src = 'sprites.png';
+let staticFrame: Frame | undefined;
+let dynamicFrame: Frame | undefined;
+let staticCacheWidth = 0;
+let staticCacheHeight = 0;
 
 function getRequiredElement<T extends HTMLElement>(id: string): T {
     const element = document.getElementById(id);
@@ -69,31 +96,58 @@ function getRequiredElement<T extends HTMLElement>(id: string): T {
     return element as T;
 }
 
-function drawFrame(frame: RenderFrame): void {
-    currentFrame = frame;
-    const scale = window.devicePixelRatio || 1;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+// Sizes the backing store to the displayed size and returns the logical-to-pixel scale.
+function resizeCanvas(target: HTMLCanvasElement): number {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.round(target.clientWidth * ratio);
+    const height = Math.round(target.clientWidth * ratio * LogicalHeight / LogicalWidth);
 
-    if (canvas.width !== Math.round(width * scale) || canvas.height !== Math.round(height * scale)) {
-        canvas.width = Math.round(width * scale);
-        canvas.height = Math.round(height * scale);
+    if (target.width !== width || target.height !== height) {
+        target.width = width;
+        target.height = height;
+    }
+    return width / LogicalWidth;
+}
+
+function renderScene(): void {
+    const scale = resizeCanvas(canvas);
+    drawingContext.setTransform(1, 0, 0, 1, 0, 0);
+    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+    drawingContext.setTransform(scale, 0, 0, scale, 0, 0);
+
+    if (staticFrame) {
+        if (staticCacheWidth !== canvas.width || staticCacheHeight !== canvas.height) {
+            staticCanvas.width = canvas.width;
+            staticCanvas.height = canvas.height;
+            staticCacheWidth = canvas.width;
+            staticCacheHeight = canvas.height;
+            staticDrawingContext.setTransform(scale, 0, 0, scale, 0, 0);
+            drawCommands(staticDrawingContext, staticFrame);
+        }
+        drawingContext.save();
+        drawingContext.setTransform(1, 0, 0, 1, 0, 0);
+        drawingContext.drawImage(staticCanvas, 0, 0);
+        drawingContext.restore();
     }
 
-    drawingContext.setTransform(scale, 0, 0, scale, 0, 0);
-    drawingContext.clearRect(0, 0, width, height);
+    if (dynamicFrame) {
+        drawCommands(drawingContext, dynamicFrame);
+    }
+}
 
+function drawCommands(target: CanvasRenderingContext2D, frame: Frame): void {
     for (const command of frame.commands) {
         const style = readStyle(frame, command.styleIndex);
         switch (command.type) {
             case DrawCommandType.Path:
-                drawPath(frame, command, style);
+                drawPath(target, frame, command, style);
                 break;
             case DrawCommandType.Text:
-                drawText(frame, command, style);
+                drawText(target, frame, command, style);
                 break;
             case DrawCommandType.Image:
-                drawImage(
+                drawSprite(
+                    target,
                     command.data,
                     readGeometry(frame, command, 0),
                     readGeometry(frame, command, 1),
@@ -107,7 +161,7 @@ function drawFrame(frame: RenderFrame): void {
     }
 }
 
-function readStyle(frame: RenderFrame, styleIndex: number): Style {
+function readStyle(frame: Frame, styleIndex: number): Style {
     const style = frame.styles[styleIndex];
     if (!style) {
         throw new Error(`Frame style index ${styleIndex} is out of range.`);
@@ -115,7 +169,7 @@ function readStyle(frame: RenderFrame, styleIndex: number): Style {
     return style;
 }
 
-function readGeometry(frame: RenderFrame, command: DrawCommand, relativeIndex: number): number {
+function readGeometry(frame: Frame, command: DrawCommand, relativeIndex: number): number {
     if (relativeIndex < 0 || relativeIndex >= command.geometryLength
         || command.geometryOffset < 0 || command.geometryLength < 0
         || command.geometryOffset + command.geometryLength > frame.geometry.length) {
@@ -128,7 +182,7 @@ function readGeometry(frame: RenderFrame, command: DrawCommand, relativeIndex: n
     return value;
 }
 
-function drawPath(frame: RenderFrame, command: DrawCommand, style: Style): void {
+function drawPath(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, style: Style): void {
     const path = new Path2D();
     let pathOffset = command.pathDataOffset;
     let geometryOffset = command.geometryOffset;
@@ -208,17 +262,17 @@ function drawPath(frame: RenderFrame, command: DrawCommand, style: Style): void 
         path.closePath();
     }
     if ((command.flags & DrawCommandFlags.Fill) !== 0) {
-        drawingContext.fillStyle = colorToCss(style.fillColor);
-        drawingContext.fill(path);
+        target.fillStyle = colorToCss(style.fillColor);
+        target.fill(path);
     }
     if ((command.flags & DrawCommandFlags.Stroke) !== 0) {
-        drawingContext.strokeStyle = colorToCss(style.strokeColor);
-        drawingContext.lineWidth = style.strokeWidth;
-        drawingContext.stroke(path);
+        target.strokeStyle = colorToCss(style.strokeColor);
+        target.lineWidth = style.strokeWidth;
+        target.stroke(path);
     }
 }
 
-function readPathNumber(frame: RenderFrame, end: number, index: number): number {
+function readPathNumber(frame: Frame, end: number, index: number): number {
     if (index >= end) {
         throw new Error('Path bytecode operation has missing coordinates.');
     }
@@ -285,7 +339,7 @@ function drawSvgArc(
     path.ellipse(centerX, centerY, rx, ry, phi, startAngle, startAngle + delta, !sweep);
 }
 
-function drawText(frame: RenderFrame, command: DrawCommand, style: Style): void {
+function drawText(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand, style: Style): void {
     const text = frame.strings[command.data];
     const font = fonts[style.fontIndex];
     if (text === undefined) {
@@ -295,33 +349,35 @@ function drawText(frame: RenderFrame, command: DrawCommand, style: Style): void 
         throw new Error(`Font index ${style.fontIndex} is out of range.`);
     }
 
-    drawingContext.fillStyle = colorToCss(style.fillColor);
-    drawingContext.font = font;
-    drawingContext.textAlign = (command.flags & DrawCommandFlags.AlignCenter) !== 0
+    target.fillStyle = colorToCss(style.fillColor);
+    target.font = font;
+    target.textAlign = (command.flags & DrawCommandFlags.AlignCenter) !== 0
         ? 'center'
         : (command.flags & DrawCommandFlags.AlignEnd) !== 0 ? 'right' : 'left';
-    drawingContext.textBaseline = 'middle';
-    drawingContext.fillText(text, readGeometry(frame, command, 0), readGeometry(frame, command, 1));
+    target.textBaseline = 'middle';
+    target.fillText(text, readGeometry(frame, command, 0), readGeometry(frame, command, 1));
 }
 
-function drawImage(imageId: number, x: number, y: number, width: number, height: number): void {
-    let image = imageCache.get(imageId);
-    if (!image) {
-        image = new Image();
-        image.addEventListener('load', () => {
-            if (currentFrame) {
-                drawFrame(currentFrame);
-            }
-        }, { once: true });
-        image.addEventListener('error', () => {
-            console.error(`Unable to load frame image resource ${imageId}.`);
-        }, { once: true });
-        imageCache.set(imageId, image);
-        image.src = `/images/${imageId}`;
-    }
-
-    if (image.complete && image.naturalWidth > 0) {
-        drawingContext.drawImage(image, x, y, width, height);
+function drawSprite(
+    target: CanvasRenderingContext2D,
+    spriteIndex: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+): void {
+    if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+        target.drawImage(
+            spriteSheet,
+            (spriteIndex % SheetColumns) * SpriteSize,
+            Math.floor(spriteIndex / SheetColumns) * SpriteSize,
+            SpriteSize,
+            SpriteSize,
+            x,
+            y,
+            width,
+            height
+        );
     }
 }
 
@@ -333,13 +389,13 @@ function colorToCss(rgba: number): string {
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function submit(
+function decodeFrame(
     encodedCommands: number[],
     encodedPathData: number[],
     geometry: number[],
     strings: string[],
     encodedStyles: number[]
-): void {
+): Frame {
     if (encodedCommands.length % 8 !== 0) {
         throw new Error('Frame command buffer has an invalid length.');
     }
@@ -373,13 +429,37 @@ function submit(
         });
     }
 
-    drawFrame({
+    return {
         commands,
         pathData: Uint8Array.from(encodedPathData),
         geometry: Float32Array.from(geometry),
         strings,
         styles
-    });
+    };
+}
+
+function submitStatic(
+    commands: number[],
+    pathData: number[],
+    geometry: number[],
+    strings: string[],
+    styles: number[]
+): void {
+    staticFrame = decodeFrame(commands, pathData, geometry, strings, styles);
+    staticCacheWidth = 0;
+    staticCacheHeight = 0;
+    renderScene();
+}
+
+function submitDynamic(
+    commands: number[],
+    pathData: number[],
+    geometry: number[],
+    strings: string[],
+    styles: number[]
+): void {
+    dynamicFrame = decodeFrame(commands, pathData, geometry, strings, styles);
+    renderScene();
 }
 
 const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet
@@ -387,7 +467,7 @@ const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotne
     .create();
 
 setModuleImports('main.js', {
-    dom: { submit }
+    dom: { submitStatic, submitDynamic }
 });
 
 const config = getConfig();

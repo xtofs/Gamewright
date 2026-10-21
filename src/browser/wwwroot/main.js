@@ -6,8 +6,32 @@ if (!context) {
     throw new Error('The browser does not provide a 2D canvas context.');
 }
 const drawingContext = context;
-const imageCache = new Map();
-let currentFrame;
+const staticCanvas = document.createElement('canvas');
+const staticContext = staticCanvas.getContext('2d');
+if (!staticContext) {
+    throw new Error('The browser does not provide a 2D offscreen canvas context.');
+}
+const staticDrawingContext = staticContext;
+// Frames are authored in this coordinate space and scaled to the canvas.
+const LogicalWidth = 640;
+const LogicalHeight = 620;
+// Sprite sheet layout: a grid of square cells; sprite indices count row by row.
+const SheetColumns = 7;
+const SpriteSize = 200;
+const spriteSheet = new Image();
+spriteSheet.addEventListener('load', () => {
+    staticCacheWidth = 0;
+    staticCacheHeight = 0;
+    renderScene();
+}, { once: true });
+spriteSheet.addEventListener('error', () => {
+    console.error('Unable to load sprites.png.');
+}, { once: true });
+spriteSheet.src = 'sprites.png';
+let staticFrame;
+let dynamicFrame;
+let staticCacheWidth = 0;
+let staticCacheHeight = 0;
 function getRequiredElement(id) {
     const element = document.getElementById(id);
     if (!(element instanceof HTMLElement)) {
@@ -15,28 +39,52 @@ function getRequiredElement(id) {
     }
     return element;
 }
-function drawFrame(frame) {
-    currentFrame = frame;
-    const scale = window.devicePixelRatio || 1;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    if (canvas.width !== Math.round(width * scale) || canvas.height !== Math.round(height * scale)) {
-        canvas.width = Math.round(width * scale);
-        canvas.height = Math.round(height * scale);
+// Sizes the backing store to the displayed size and returns the logical-to-pixel scale.
+function resizeCanvas(target) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.round(target.clientWidth * ratio);
+    const height = Math.round(target.clientWidth * ratio * LogicalHeight / LogicalWidth);
+    if (target.width !== width || target.height !== height) {
+        target.width = width;
+        target.height = height;
     }
+    return width / LogicalWidth;
+}
+function renderScene() {
+    const scale = resizeCanvas(canvas);
+    drawingContext.setTransform(1, 0, 0, 1, 0, 0);
+    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
     drawingContext.setTransform(scale, 0, 0, scale, 0, 0);
-    drawingContext.clearRect(0, 0, width, height);
+    if (staticFrame) {
+        if (staticCacheWidth !== canvas.width || staticCacheHeight !== canvas.height) {
+            staticCanvas.width = canvas.width;
+            staticCanvas.height = canvas.height;
+            staticCacheWidth = canvas.width;
+            staticCacheHeight = canvas.height;
+            staticDrawingContext.setTransform(scale, 0, 0, scale, 0, 0);
+            drawCommands(staticDrawingContext, staticFrame);
+        }
+        drawingContext.save();
+        drawingContext.setTransform(1, 0, 0, 1, 0, 0);
+        drawingContext.drawImage(staticCanvas, 0, 0);
+        drawingContext.restore();
+    }
+    if (dynamicFrame) {
+        drawCommands(drawingContext, dynamicFrame);
+    }
+}
+function drawCommands(target, frame) {
     for (const command of frame.commands) {
         const style = readStyle(frame, command.styleIndex);
         switch (command.type) {
             case 1 /* DrawCommandType.Path */:
-                drawPath(frame, command, style);
+                drawPath(target, frame, command, style);
                 break;
             case 2 /* DrawCommandType.Text */:
-                drawText(frame, command, style);
+                drawText(target, frame, command, style);
                 break;
             case 3 /* DrawCommandType.Image */:
-                drawImage(command.data, readGeometry(frame, command, 0), readGeometry(frame, command, 1), readGeometry(frame, command, 2), readGeometry(frame, command, 3));
+                drawSprite(target, command.data, readGeometry(frame, command, 0), readGeometry(frame, command, 1), readGeometry(frame, command, 2), readGeometry(frame, command, 3));
                 break;
             default:
                 throw new Error(`Unknown draw command type: ${command.type}`);
@@ -62,7 +110,7 @@ function readGeometry(frame, command, relativeIndex) {
     }
     return value;
 }
-function drawPath(frame, command, style) {
+function drawPath(target, frame, command, style) {
     const path = new Path2D();
     let pathOffset = command.pathDataOffset;
     let geometryOffset = command.geometryOffset;
@@ -137,13 +185,13 @@ function drawPath(frame, command, style) {
         path.closePath();
     }
     if ((command.flags & 1 /* DrawCommandFlags.Fill */) !== 0) {
-        drawingContext.fillStyle = colorToCss(style.fillColor);
-        drawingContext.fill(path);
+        target.fillStyle = colorToCss(style.fillColor);
+        target.fill(path);
     }
     if ((command.flags & 2 /* DrawCommandFlags.Stroke */) !== 0) {
-        drawingContext.strokeStyle = colorToCss(style.strokeColor);
-        drawingContext.lineWidth = style.strokeWidth;
-        drawingContext.stroke(path);
+        target.strokeStyle = colorToCss(style.strokeColor);
+        target.lineWidth = style.strokeWidth;
+        target.stroke(path);
     }
 }
 function readPathNumber(frame, end, index) {
@@ -200,7 +248,7 @@ function drawSvgArc(path, startX, startY, radiusX, radiusY, rotation, largeArc, 
         delta += Math.PI * 2;
     path.ellipse(centerX, centerY, rx, ry, phi, startAngle, startAngle + delta, !sweep);
 }
-function drawText(frame, command, style) {
+function drawText(target, frame, command, style) {
     const text = frame.strings[command.data];
     const font = fonts[style.fontIndex];
     if (text === undefined) {
@@ -209,31 +257,17 @@ function drawText(frame, command, style) {
     if (font === undefined) {
         throw new Error(`Font index ${style.fontIndex} is out of range.`);
     }
-    drawingContext.fillStyle = colorToCss(style.fillColor);
-    drawingContext.font = font;
-    drawingContext.textAlign = (command.flags & 8 /* DrawCommandFlags.AlignCenter */) !== 0
+    target.fillStyle = colorToCss(style.fillColor);
+    target.font = font;
+    target.textAlign = (command.flags & 8 /* DrawCommandFlags.AlignCenter */) !== 0
         ? 'center'
         : (command.flags & 16 /* DrawCommandFlags.AlignEnd */) !== 0 ? 'right' : 'left';
-    drawingContext.textBaseline = 'middle';
-    drawingContext.fillText(text, readGeometry(frame, command, 0), readGeometry(frame, command, 1));
+    target.textBaseline = 'middle';
+    target.fillText(text, readGeometry(frame, command, 0), readGeometry(frame, command, 1));
 }
-function drawImage(imageId, x, y, width, height) {
-    let image = imageCache.get(imageId);
-    if (!image) {
-        image = new Image();
-        image.addEventListener('load', () => {
-            if (currentFrame) {
-                drawFrame(currentFrame);
-            }
-        }, { once: true });
-        image.addEventListener('error', () => {
-            console.error(`Unable to load frame image resource ${imageId}.`);
-        }, { once: true });
-        imageCache.set(imageId, image);
-        image.src = `/images/${imageId}`;
-    }
-    if (image.complete && image.naturalWidth > 0) {
-        drawingContext.drawImage(image, x, y, width, height);
+function drawSprite(target, spriteIndex, x, y, width, height) {
+    if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+        target.drawImage(spriteSheet, (spriteIndex % SheetColumns) * SpriteSize, Math.floor(spriteIndex / SheetColumns) * SpriteSize, SpriteSize, SpriteSize, x, y, width, height);
     }
 }
 function colorToCss(rgba) {
@@ -243,7 +277,7 @@ function colorToCss(rgba) {
     const alpha = ((rgba >>> 24) & 0xff) / 255;
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
-function submit(encodedCommands, encodedPathData, geometry, strings, encodedStyles) {
+function decodeFrame(encodedCommands, encodedPathData, geometry, strings, encodedStyles) {
     if (encodedCommands.length % 8 !== 0) {
         throw new Error('Frame command buffer has an invalid length.');
     }
@@ -274,19 +308,29 @@ function submit(encodedCommands, encodedPathData, geometry, strings, encodedStyl
             fontIndex: styleView.getInt32(offset + 12, true)
         });
     }
-    drawFrame({
+    return {
         commands,
         pathData: Uint8Array.from(encodedPathData),
         geometry: Float32Array.from(geometry),
         strings,
         styles
-    });
+    };
+}
+function submitStatic(commands, pathData, geometry, strings, styles) {
+    staticFrame = decodeFrame(commands, pathData, geometry, strings, styles);
+    staticCacheWidth = 0;
+    staticCacheHeight = 0;
+    renderScene();
+}
+function submitDynamic(commands, pathData, geometry, strings, styles) {
+    dynamicFrame = decodeFrame(commands, pathData, geometry, strings, styles);
+    renderScene();
 }
 const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet
     .withApplicationArguments('start')
     .create();
 setModuleImports('main.js', {
-    dom: { submit }
+    dom: { submitStatic, submitDynamic }
 });
 const config = getConfig();
 const exports = await getAssemblyExports(config.mainAssemblyName);
