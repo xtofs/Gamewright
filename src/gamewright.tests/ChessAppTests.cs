@@ -36,6 +36,24 @@ public class ChessAppTests
     }
 
     [Fact]
+    public void FileAndRankLabelsAreCentredInTheFrameMargin()
+    {
+        var frame = new ChessApp().RenderStatic();
+
+        (float X, float Y) LabelPosition(string label)
+        {
+            var command = frame.Commands.Single(c => c.Type == DrawCommandType.Text && frame.Strings[c.Data] == label);
+            return (frame.Geometry[command.GeometryOffset], frame.Geometry[command.GeometryOffset + 1]);
+        }
+
+        // Board at (112, 104), 52px cells, 34px margin: "a" is under the a-file, "8" beside the top rank.
+        Assert.Equal((138f, 104f + 416 + 17), LabelPosition("a"));
+        Assert.Equal((112f - 17, 104f + 26), LabelPosition("8"));
+        Assert.Equal((112f + 7 * 52 + 26, 104f + 416 + 17), LabelPosition("h"));
+        Assert.Equal((112f - 17, 104f + 7 * 52 + 26), LabelPosition("1"));
+    }
+
+    [Fact]
     public void DynamicFrameHasAllPiecesAndWhoseTurnItIs()
     {
         var frame = new ChessApp().RenderDynamic();

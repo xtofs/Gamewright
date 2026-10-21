@@ -51,11 +51,11 @@ public sealed class ChessApp : GameApp
         canvas.DrawRectangle(BoardX, BoardY, BoardSize, BoardSize, new StrokeStyle(new Color(38, 43, 39), 3));
         for (var index = 0; index < ChessBoard.Size; index++)
         {
-            var center = index * CellSize + CellSize / 2;
-            canvas.DrawText(((char)('a' + index)).ToString(), BoardX + center, BoardY + BoardSize + FrameMargin / 2,
-                Ink, alignment: TextAlignment.Center);
-            canvas.DrawText((ChessBoard.Size - index).ToString(), BoardX - FrameMargin / 2, BoardY + center,
-                Ink, alignment: TextAlignment.Center);
+            // File letters sit in the frame margin under each column, rank numbers in the margin beside each row.
+            canvas.DrawTextCentered(
+                ((char)('a' + index)).ToString(), BoardX + index * CellSize, BoardY + BoardSize, CellSize, FrameMargin, Ink);
+            canvas.DrawTextCentered(
+                (ChessBoard.Size - index).ToString(), BoardX - FrameMargin, BoardY + index * CellSize, FrameMargin, CellSize, Ink);
         }
         canvas.DrawText("GAMEWRIGHT  /  CHESS", BoardX, 43, Ink, FontIndex.Heading);
     }
