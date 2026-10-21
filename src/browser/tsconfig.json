@@ -7,8 +7,9 @@
     "strict": true,
     "noEmitOnError": true,
     "skipLibCheck": true,
-    "outDir": "dist",
+    "outDir": "wwwroot",
     "rootDir": "wwwroot"
   },
-  "include": ["wwwroot/main.ts", "types/**/*.d.ts"]
+  "include": ["wwwroot/main.ts", "types/**/*.d.ts"],
+  "exclude": []
 }

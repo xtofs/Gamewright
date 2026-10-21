@@ -11,6 +11,12 @@
     <ProjectReference Include="../gamewright/gamewright.csproj" />
   </ItemGroup>
 
+  <!-- Compile wwwroot/main.ts to wwwroot/main.js before static web assets are collected. -->
+  <Target Name="BuildTypeScript" BeforeTargets="BeforeBuild;ResolveProjectStaticWebAssets" Inputs="wwwroot/main.ts;types/dotnet.d.ts;tsconfig.json;package.json" Outputs="wwwroot/main.js">
+    <Exec Command="npm install --no-audit --no-fund" Condition="!Exists('node_modules')" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
   <ItemGroup>
     <StaticWebAssetFingerprintPattern Include="JS" Pattern="*.js" Expression="#[.{fingerprint}]!" />
   </ItemGroup>

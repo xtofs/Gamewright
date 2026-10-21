@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "tsc --project tsconfig.json && node -e \"require('node:fs').copyFileSync('dist/main.js', 'wwwroot/main.js')\""
+    "build": "tsc --project tsconfig.json"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
