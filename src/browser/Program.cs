@@ -12,6 +12,7 @@ internal class Program
 
         try
         {
+            Api.ConfigureSprites(SpriteSheet.Columns, SpriteSheet.CellSize);
             ChessSample.RenderStatic();
             while (true)
             {
@@ -39,6 +40,9 @@ partial class Api
         [JSMarshalAs<JSType.MemoryView>] Span<byte> geometry,
         [JSMarshalAs<JSType.MemoryView>] Span<byte> styles,
         [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings);
+
+    [JSImport("dom.configureSprites", "main.js")]
+    internal static partial void ConfigureSprites(int columns, int cellSize);
 
     [JSImport("dom.reportError", "main.js")]
     internal static partial void ReportError(string message);
@@ -127,29 +131,28 @@ partial class ChessSample
         Api.SendDynamic(builder.Build());
     }
 
-    // Sprite indices on sprites.png: 7 columns, rows of K, Q, R, B, N, P; white row 2, black row 3.
-    private const int WhiteKingSprite = 14;
-    private const int BlackKingSprite = 21;
     private const float PieceSize = 44;
+
+    private static readonly PieceKind[] BackRank =
+        [PieceKind.Rook, PieceKind.Knight, PieceKind.Bishop, PieceKind.Queen,
+         PieceKind.King, PieceKind.Bishop, PieceKind.Knight, PieceKind.Rook];
 
     private static void AddChessPieces(FrameBuilder builder)
     {
-        // Offsets within a sprite row: King 0, Queen 1, Rook 2, Bishop 3, Knight 4, Pawn 5.
-        int[] backRank = [2, 4, 3, 1, 0, 3, 4, 2];
         for (var file = 0; file < 8; file++)
         {
-            AddPiece(builder, file, 0, BlackKingSprite + backRank[file]);
-            AddPiece(builder, file, 1, BlackKingSprite + 5);
-            AddPiece(builder, file, 6, WhiteKingSprite + 5);
-            AddPiece(builder, file, 7, WhiteKingSprite + backRank[file]);
+            AddPiece(builder, file, 0, PieceColor.Black, BackRank[file]);
+            AddPiece(builder, file, 1, PieceColor.Black, PieceKind.Pawn);
+            AddPiece(builder, file, 6, PieceColor.White, PieceKind.Pawn);
+            AddPiece(builder, file, 7, PieceColor.White, BackRank[file]);
         }
     }
 
-    private static void AddPiece(FrameBuilder builder, int file, int rank, int sprite)
+    private static void AddPiece(FrameBuilder builder, int file, int rank, PieceColor color, PieceKind kind)
     {
         var x = BoardX + file * CellSize + (CellSize - PieceSize) / 2;
         var y = BoardY + rank * CellSize + (CellSize - PieceSize) / 2;
-        builder.AddSprite(sprite, x, y, PieceSize, PieceSize);
+        builder.AddSprite(ChessSprites.Index(color, kind), x, y, PieceSize, PieceSize);
     }
 
     private static Action<PathBuilder> Rectangle(float x, float y, float width, float height) =>

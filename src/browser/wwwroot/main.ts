@@ -59,9 +59,9 @@ const staticContext = getRequiredContext(staticCanvas);
 const LogicalWidth = 640;
 const LogicalHeight = 620;
 
-// Sprite sheet layout: a grid of square cells; sprite indices count row by row.
-const SheetColumns = 7;
-const SpriteSize = 200;
+// Sprite sheet layout, supplied by the host (Gamewright.SpriteSheet) before the first frame.
+let sheetColumns = 0;
+let spriteSize = 0;
 
 const spriteSheet = new Image();
 spriteSheet.addEventListener('load', () => {
@@ -364,13 +364,16 @@ function drawSprite(
     width: number,
     height: number
 ): void {
+    if (sheetColumns === 0 || spriteSize === 0) {
+        throw new Error('The sprite sheet layout was not configured.');
+    }
     if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
         target.drawImage(
             spriteSheet,
-            (spriteIndex % SheetColumns) * SpriteSize,
-            Math.floor(spriteIndex / SheetColumns) * SpriteSize,
-            SpriteSize,
-            SpriteSize,
+            (spriteIndex % sheetColumns) * spriteSize,
+            Math.floor(spriteIndex / sheetColumns) * spriteSize,
+            spriteSize,
+            spriteSize,
             x,
             y,
             width,
@@ -448,6 +451,11 @@ function decodeFrame(
     };
 }
 
+function configureSprites(columns: number, cellSize: number): void {
+    sheetColumns = columns;
+    spriteSize = cellSize;
+}
+
 function reportError(message: string): void {
     const element = getRequiredElement<HTMLElement>('error');
     element.textContent = message;
@@ -479,7 +487,7 @@ try {
         .create();
 
     setModuleImports('main.js', {
-        dom: { submitFrame, reportError }
+        dom: { submitFrame, configureSprites, reportError }
     });
 
     const config = getConfig();
