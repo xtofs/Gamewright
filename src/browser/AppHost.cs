@@ -1,24 +1,31 @@
-using System.Runtime.InteropServices.JavaScript;
 using Gamewright;
 
-// Hosts a GameApp in the page: sends its frames to the renderer and forwards input from main.ts.
-// Only the frames named by an Invalidation are drawn and sent again. The imports from JavaScript
+// Hosts a GameApp in the page: sends its frames to the renderer and receives input from main.ts.
+// Only the frames named by an Invalidation are drawn and sent again. The calls into JavaScript
 // are in AppHost.Interop.cs.
-partial class AppHost
+sealed partial class AppHost
 {
-    private static GameApp? app;
+    private readonly GameApp app;
 
-    /// <summary>Configures the renderer for the app and draws its first frames. Failures are shown on the page.</summary>
-    public static void Start(GameApp gameApp)
+    // Kept in a field so the delegate handed to JavaScript stays alive as long as the host.
+    private readonly Action<double, double> clickHandler;
+
+    public AppHost(GameApp app)
     {
-        ArgumentNullException.ThrowIfNull(gameApp);
+        ArgumentNullException.ThrowIfNull(app);
+        this.app = app;
+        clickHandler = OnClick;
+    }
 
+    /// <summary>Configures the renderer for the app, starts listening for input and draws the first frames. Failures are shown on the page.</summary>
+    public void Start()
+    {
         try
         {
-            app = gameApp;
-            ConfigureFrame(gameApp.FrameWidth, gameApp.FrameHeight);
-            if (gameApp.SpriteSheet is { } sheet)
+            ConfigureFrame(app.FrameWidth, app.FrameHeight);
+            if (app.SpriteSheet is { } sheet)
                 ConfigureSprites(sheet.ImagePath, sheet.Columns, sheet.CellSize);
+            SetClickHandler(clickHandler);
             Render(Invalidation.All);
         }
         catch (Exception exception)
@@ -29,17 +36,13 @@ partial class AppHost
     }
 
     /// <summary>Handles a click at a frame-space position.</summary>
-    [JSExport]
-    internal static void Click(double x, double y) => Render(Running.Click((float)x, (float)y));
+    private void OnClick(double x, double y) => Render(app.Click((float)x, (float)y));
 
-    private static GameApp Running =>
-        app ?? throw new InvalidOperationException("The app has not been started.");
-
-    private static void Render(Invalidation invalidation)
+    private void Render(Invalidation invalidation)
     {
         if (invalidation.HasFlag(Invalidation.Static))
-            SendFrame(true, Running.RenderStatic());
+            SendFrame(true, app.RenderStatic());
         if (invalidation.HasFlag(Invalidation.Dynamic))
-            SendFrame(false, Running.RenderDynamic());
+            SendFrame(false, app.RenderDynamic());
     }
 }

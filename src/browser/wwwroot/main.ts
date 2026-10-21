@@ -640,24 +640,31 @@ new ResizeObserver(() => {
     }
 }).observe(canvas);
 
+// Registered by the host (AppHost.SetClickHandler); called with a position in frame coordinates.
+let clickHandler: ((x: number, y: number) => void) | undefined;
+
+function setClickHandler(handler: (x: number, y: number) => void): void {
+    clickHandler = handler;
+}
+
+// Clicks are sent in the frame's coordinate space; the app decides what they hit.
+canvas.addEventListener('pointerdown', (event) => {
+    if (!clickHandler) {
+        return;
+    }
+    try {
+        const { x, y } = toFrameCoordinates(event.clientX, event.clientY);
+        clickHandler(x, y);
+    } catch (error) {
+        reportError(error instanceof Error ? error.message : String(error));
+    }
+});
+
 try {
-    const { setModuleImports, getAssemblyExports, getConfig, runMain } = await dotnet.create();
+    const { setModuleImports, runMain } = await dotnet.create();
 
     setModuleImports('main.js', {
-        dom: { submitFrame, configureFrame, configureSprites, reportError }
-    });
-
-    const config = getConfig();
-    const exports = await getAssemblyExports(config.mainAssemblyName);
-
-    // Clicks are sent in the frame's logical coordinate space; C# decides what they hit.
-    canvas.addEventListener('pointerdown', (event) => {
-        try {
-            const { x, y } = toFrameCoordinates(event.clientX, event.clientY);
-            exports.AppHost.Click(x, y);
-        } catch (error) {
-            reportError(error instanceof Error ? error.message : String(error));
-        }
+        dom: { submitFrame, configureFrame, configureSprites, setClickHandler, reportError }
     });
 
     await runMain();
