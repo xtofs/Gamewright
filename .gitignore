@@ -1,0 +1,14 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Node.js dependencies and TypeScript build output
+**/node_modules/
+**/dist/
+
+# Local build and tool output
+/target/
+
+# Editor and operating-system files
+.DS_Store
+.vscode/

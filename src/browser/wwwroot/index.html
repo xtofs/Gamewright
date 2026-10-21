@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!--  Licensed to the .NET Foundation under one or more agreements. -->
+<!-- The .NET Foundation licenses this file to you under the MIT license. -->
+<html>
+
+<head>
+  <title>Gamewright Canvas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preload" id="webassembly" />
+  <script type="importmap"></script>
+  <script type='module' src="main#[.{fingerprint}].js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #101522;
+      color: #f2f5fa;
+    }
+
+    body {
+      max-width: 720px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #52617a;
+      border-radius: 0.5rem;
+    }
+
+    button {
+      margin: 1rem 0.5rem 0 0;
+      padding: 0.5rem 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Gamewright Frame Renderer</h1>
+    <p>C# draw commands reference compact geometry and styles; the TypeScript renderer draws each frame to this canvas.</p>
+    <canvas id="surface" width="640" height="240" aria-label="Animated frame canvas"></canvas>
+    <button id="pause" type="button">Pause</button>
+    <button id="reset" type="button">Reset</button>
+  </main>
+</body>
+
+</html>
