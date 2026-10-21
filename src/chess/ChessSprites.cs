@@ -2,10 +2,10 @@ namespace Chess;
 
 using Gamewright;
 
-/// <summary>The chess sprite sheet (<c>sprites.png</c>) and where the pieces are on it: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
+/// <summary>The chess sprite sheet and where the pieces are on it: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
 public static class ChessSprites
 {
-    public static readonly SpriteSheetLayout Sheet = new(columns: 7, rows: 4, cellSize: 200);
+    public static readonly SpriteSheetLayout Sheet = new(columns: 7, rows: 4, cellSize: 200, imagePath: "sprites.png");
 
     private const int WhiteRow = 2;
     private const int BlackRow = 3;

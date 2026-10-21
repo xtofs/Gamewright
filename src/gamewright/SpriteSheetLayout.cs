@@ -7,15 +7,20 @@ namespace Gamewright;
 /// </summary>
 public readonly record struct SpriteSheetLayout
 {
-    public SpriteSheetLayout(int columns, int rows, int cellSize)
+    public SpriteSheetLayout(int columns, int rows, int cellSize, string imagePath)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(imagePath);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(columns);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rows);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSize);
         Columns = columns;
         Rows = rows;
         CellSize = cellSize;
+        ImagePath = imagePath;
     }
+
+    /// <summary>Where the page loads the image from, relative to the page (for example <c>"sprites.png"</c>).</summary>
+    public string ImagePath { get; }
 
     public int Columns { get; }
 
