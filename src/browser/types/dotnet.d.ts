@@ -5,7 +5,6 @@ declare module '*_framework/dotnet.js' {
             getAssemblyExports(assemblyName: string): Promise<{
                 AppHost: {
                     Click(x: number, y: number): void;
-                    NewGame(): void;
                 };
             }>;
             getConfig(): { mainAssemblyName: string };

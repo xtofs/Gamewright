@@ -73,7 +73,7 @@ const staticContext = getRequiredContext(staticCanvas);
 let frameWidth = 0;
 let frameHeight = 0;
 
-// Sprite sheet layout, supplied by the host (Gamewright.SpriteSheet) before the first frame.
+// Sprite sheet layout, supplied by the host (the app's SpriteSheetLayout) before the first frame.
 let sheetColumns = 0;
 let spriteSize = 0;
 
@@ -84,9 +84,8 @@ spriteSheet.addEventListener('load', () => {
     renderScene();
 }, { once: true });
 spriteSheet.addEventListener('error', () => {
-    console.error('Unable to load sprites.png.');
+    console.error(`Unable to load the sprite sheet ${spriteSheet.src}.`);
 }, { once: true });
-spriteSheet.src = 'sprites.png';
 let staticFrame: Frame | undefined;
 let dynamicFrame: Frame | undefined;
 let staticCacheWidth = 0;
@@ -590,9 +589,10 @@ function configureFrame(width: number, height: number): void {
     canvas.style.aspectRatio = `${width} / ${height}`;
 }
 
-function configureSprites(columns: number, cellSize: number): void {
+function configureSprites(imagePath: string, columns: number, cellSize: number): void {
     sheetColumns = columns;
     spriteSize = cellSize;
+    spriteSheet.src = imagePath;
 }
 
 function reportError(message: string): void {
@@ -658,10 +658,6 @@ try {
         } catch (error) {
             reportError(error instanceof Error ? error.message : String(error));
         }
-    });
-
-    getRequiredElement<HTMLButtonElement>('new-game').addEventListener('click', () => {
-        exports.AppHost.NewGame();
     });
 
     await runMain();

@@ -1,4 +1,4 @@
-using Gamewright;
+using Chess;
 
 internal class Program
 {
@@ -6,10 +6,7 @@ internal class Program
     {
         try
         {
-            Api.ConfigureFrame(AppHost.FrameWidth, AppHost.FrameHeight);
-            if (AppHost.SpriteSheet is { } sheet)
-                Api.ConfigureSprites(sheet.Columns, sheet.CellSize);
-            AppHost.Render(Invalidation.All);
+            AppHost.Start(new ChessApp());
         }
         catch (Exception exception)
         {

@@ -20,7 +20,7 @@ partial class Api
     internal static partial void ConfigureFrame(int width, int height);
 
     [JSImport("dom.configureSprites", "main.js")]
-    internal static partial void ConfigureSprites(int columns, int cellSize);
+    internal static partial void ConfigureSprites(string imagePath, int columns, int cellSize);
 
     [JSImport("dom.reportError", "main.js")]
     internal static partial void ReportError(string message);
