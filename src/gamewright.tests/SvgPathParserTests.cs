@@ -62,12 +62,39 @@ public class SvgPathParserTests
     }
 
     [Theory]
+    [InlineData("M0 0 A5 5 0 011.5 1.5")]
+    [InlineData("M0 0 A5 5 0 0 1 1.5 1.5")]
+    [InlineData("M0 0 A5,5,0,0,1,1.5,1.5")]
+    public void CompactArcFlagsParseLikeSpacedOnes(string path)
+    {
+        var result = SvgPathParser.Parse(path);
+
+        Assert.Equal([5f, 5, 0, 0, 1, 1.5f, 1.5f], result.Geometry.Skip(2).ToArray());
+    }
+
+    [Fact]
+    public void ConsecutiveCompactFlagsAreSplit()
+    {
+        var result = SvgPathParser.Parse("M0 0 a5 5 0 1110 0");
+
+        Assert.Equal([5f, 5, 0, 1, 1, 10, 0], result.Geometry.Skip(2).ToArray());
+    }
+
+    [Theory]
+    [InlineData("M5. 5. L10. 0.", new[] { 5f, 5, 10, 0 })]
+    [InlineData("M.5.5L1.5.5", new[] { 0.5f, 0.5f, 1.5f, 0.5f })]
+    public void NumbersMayEndOrStartWithADot(string path, float[] expected) =>
+        Assert.Equal(expected, SvgPathParser.Parse(path).Geometry);
+
+    [Theory]
     [InlineData("")]
     [InlineData("L0 0")]
     [InlineData("M0")]
     [InlineData("M0 0 L1")]
     [InlineData("M0 0 # 1 1")]
     [InlineData("M0 0 A5 5 0 2 0 10 0")]
+    [InlineData("M0 0 A5 5 0 -1 0 10 0")]
+    [InlineData("M0 0 A5 5 0 1")]
     [InlineData("M0 0 X1 1")]
     public void RejectsMalformedData(string path) =>
         Assert.Throws<FormatException>(() => SvgPathParser.Parse(path));

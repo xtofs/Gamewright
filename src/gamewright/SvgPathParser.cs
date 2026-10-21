@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 internal static class SvgPathParser
 {
     private static readonly Regex TokenPattern = new(
-        @"[a-zA-Z]|[-+]?(?:\d*\.?\d+)(?:[eE][-+]?\d+)?",
+        @"[a-zA-Z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?",
         RegexOptions.CultureInvariant);
 
     public static (byte[] PathData, float[] Geometry, bool Closed) Parse(string path)
@@ -271,12 +271,22 @@ internal static class SvgPathParser
         return value;
     }
 
+    // An arc flag is a single '0' or '1' character, which SVG allows to be written without a
+    // separator ("a5 5 0 01.5 1.5"), so it may be the first character of a longer token.
     private static bool ReadFlag(string[] tokens, ref int index)
     {
-        var value = ReadNumber(tokens, ref index);
-        if (value is not (0 or 1))
+        if (index >= tokens.Length || IsCommand(tokens[index]))
+            throw new FormatException("SVG path command is missing a coordinate.");
+
+        var token = tokens[index];
+        if (token[0] is not ('0' or '1'))
             throw new FormatException("SVG arc flags must be 0 or 1.");
-        return value == 1;
+
+        if (token.Length == 1)
+            index++;
+        else
+            tokens[index] = token[1..];
+        return token[0] == '1';
     }
 
     private static bool IsCommand(string token) =>
