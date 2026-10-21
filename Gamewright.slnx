@@ -3,6 +3,8 @@
     <Project Path="src/browser/browser.csproj" />
     <Project Path="src/gamewright/gamewright.csproj" />
     <Project Path="src/chess/chess.csproj" />
+    <Project Path="src/gamewright.avalonia/gamewright.avalonia.csproj" />
+    <Project Path="src/chess.avalonia/chess.avalonia.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/chess.tests/chess.tests.csproj" />

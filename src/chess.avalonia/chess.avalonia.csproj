@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The chess sprite sheet, shared with the browser host. -->
+    <AvaloniaResource Include="../browser/wwwroot/sprites.png" Link="sprites.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../gamewright.avalonia/gamewright.avalonia.csproj" />
+    <ProjectReference Include="../chess/chess.csproj" />
+  </ItemGroup>
+
+</Project>
