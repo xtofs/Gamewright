@@ -128,9 +128,10 @@ public class HexGrid<T> where T : struct
 
     public bool Contains(Hex hex) => HexMath.IsOnBoard(hex, Radius);
 
-    internal NeighborEnumerator Neighbors(Hex hex) => new NeighborEnumerator(Radius, hex);
+    /// <summary>The hexes next to <paramref name="hex"/> that are on the board, as an allocation-free enumeration.</summary>
+    public NeighborEnumerator Neighbors(Hex hex) => new NeighborEnumerator(Radius, hex);
 
-    internal ref struct NeighborEnumerator //  structurally a : IEnumerator<Hex>, IEnumerable<Hex> but won't ever be used boxed
+    public ref struct NeighborEnumerator //  structurally a : IEnumerator<Hex>, IEnumerable<Hex> but won't ever be used boxed
     {
         private readonly int _radius;
         private readonly Hex _hex;

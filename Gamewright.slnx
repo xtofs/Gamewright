@@ -5,11 +5,13 @@
     <Project Path="src/Chess.Browser/Chess.Browser.csproj" />
     <Project Path="src/Gamewright/Gamewright.csproj" />
     <Project Path="src/Chess/Chess.csproj" />
+    <Project Path="src/Havannah/Havannah.csproj" />
     <Project Path="src/Gamewright.Avalonia/Gamewright.Avalonia.csproj" />
     <Project Path="src/Chess.Avalonia/Chess.Avalonia.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Chess.Tests/Chess.Tests.csproj" />
+    <Project Path="tests/Havannah.Tests/Havannah.Tests.csproj" />
     <Project Path="tests/Gamewright.Tests/Gamewright.Tests.csproj" />
     <Project Path="tests/Gamewright.HexagonalGrid.Tests/Gamewright.HexagonalGrid.Tests.csproj" />
   </Folder>

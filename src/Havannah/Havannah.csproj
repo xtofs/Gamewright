@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Gamewright.HexagonalGrid" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Gamewright/Gamewright.csproj" />
+    <ProjectReference Include="../Gamewright.HexagonalGrid/Gamewright.HexagonalGrid.csproj" />
+  </ItemGroup>
+
+</Project>
