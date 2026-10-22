@@ -8,6 +8,8 @@
     <Project Path="src/Havannah/Havannah.csproj" />
     <Project Path="src/Gamewright.Avalonia/Gamewright.Avalonia.csproj" />
     <Project Path="src/Chess.Avalonia/Chess.Avalonia.csproj" />
+    <Project Path="src/Havannah.Browser/Havannah.Browser.csproj" />
+    <Project Path="src/Havannah.Avalonia/Havannah.Avalonia.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Chess.Tests/Chess.Tests.csproj" />
