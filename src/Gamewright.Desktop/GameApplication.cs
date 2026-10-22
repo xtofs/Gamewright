@@ -7,11 +7,11 @@ using Avalonia.Platform;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 
-namespace Gamewright.Avalonia;
+namespace Gamewright.Desktop;
 
 /// <summary>
 /// Runs a <see cref="GameApp"/> in a desktop window. An app's executable is a single call:
-/// <c>GameApplication.Run(new MyApp(), "My game", args)</c>. Images are loaded by path from the
+/// <c>GameApplication.Run(new MyApp(), args)</c>. Images are loaded by path from the
 /// executable's Avalonia resources (<c>avares://&lt;assembly&gt;/&lt;path&gt;</c>), so an app includes
 /// the files its frames name as <c>AvaloniaResource</c> items.
 /// </summary>
@@ -22,29 +22,26 @@ namespace Gamewright.Avalonia;
 public sealed class GameApplication : Application
 {
     private readonly GameApp app;
-    private readonly string title;
     private readonly string resourceAssembly;
 
-    private GameApplication(GameApp app, string title, string resourceAssembly)
+    private GameApplication(GameApp app, string resourceAssembly)
     {
         this.app = app;
-        this.title = title;
         this.resourceAssembly = resourceAssembly;
     }
 
     /// <summary>Starts the app and returns when its window closes.</summary>
     /// <param name="resourceAssembly">The assembly whose resources hold the images; defaults to the executable.</param>
-    public static int Run(GameApp app, string title, string[] args, Assembly? resourceAssembly = null)
+    public static int Run(GameApp app, string[] args, Assembly? resourceAssembly = null)
     {
         ArgumentNullException.ThrowIfNull(app);
-        ArgumentException.ThrowIfNullOrWhiteSpace(title);
         ArgumentNullException.ThrowIfNull(args);
 
         var assemblyName = (resourceAssembly ?? Assembly.GetEntryAssembly())?.GetName().Name
             ?? throw new InvalidOperationException("There is no entry assembly to load resources from.");
 
         return AppBuilder
-            .Configure(() => new GameApplication(app, title, assemblyName))
+            .Configure(() => new GameApplication(app, assemblyName))
             .UsePlatformDetect()
             .StartWithClassicDesktopLifetime(args);
     }
@@ -55,7 +52,7 @@ public sealed class GameApplication : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var window = new GameWindow(app, title, LoadImage);
+            var window = new GameWindow(app, app.Title, LoadImage);
             desktop.MainWindow = window;
 
             var args = desktop.Args ?? [];

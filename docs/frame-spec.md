@@ -1,7 +1,7 @@
 # Frame format
 
 A `Frame` is the drawing language between an app and a renderer. An app records one with a
-`Canvas` (or `FrameBuilder`), and each host — the browser renderer in `main.ts`, the Avalonia
+`Canvas` (or `FrameBuilder`), and each host — the browser renderer in `main.ts`, the desktop
 `GameControl`, any future one — reads it and draws. This document says what a frame contains,
 how much data each command and path operation consumes, and what a renderer must do with it.
 The producers are in `src/Gamewright` (`FrameBuilder`, `PathBuilder`, `SvgPathParser`).
@@ -156,8 +156,8 @@ its opcodes, an unknown paint mode or an unknown font.
 | Role                         | Where                                                                       |
 | ---------------------------- | --------------------------------------------------------------------------- |
 | Producers                    | `src/Gamewright`: `Canvas` → `FrameBuilder`, `PathBuilder`, `SvgPathParser` |
-| Browser renderer             | `src/Chess.Browser/wwwroot/main.ts` (reads the buffers sent by `AppHost`)   |
-| Avalonia renderer            | `src/Gamewright.Avalonia/GameControl.cs`                                    |
+| Browser renderer             | `src/Gamewright.Browser/wwwroot/main.ts` (reads the buffers sent by `AppHost`)   |
+| Desktop renderer             | `src/Gamewright.Desktop/GameControl.cs`                                    |
 | Wire layouts pinned by tests | `tests/Gamewright.Tests/ProtocolTests.cs` s sent by `AppHost`)              |
-| Avalonia renderer            | `src/Gamewright.Avalonia/GameControl.cs`                                    |
+| Desktop renderer             | `src/Gamewright.Desktop/GameControl.cs`                                    |
 | Wire layouts pinned by tests | `tests/Gamewright.Tests/ProtocolTests.cs`                                   |

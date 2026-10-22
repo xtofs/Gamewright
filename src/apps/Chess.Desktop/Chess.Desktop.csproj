@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../build/Desktop.Host.props" />
+
+  <PropertyGroup>
+    <GameApp>Chess.ChessApp</GameApp>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../games/Chess/Chess.csproj" />
+    <!-- The image the Chess frames name, shared with the browser host. -->
+    <AvaloniaResource Include="../Chess.Browser/wwwroot/sprites.png" Link="sprites.png" />
+  </ItemGroup>
+
+</Project>

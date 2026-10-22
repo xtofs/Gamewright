@@ -1,0 +1,38 @@
+<Project>
+
+  <!--
+    Shared by the desktop host of every game. A host project imports this file and names its game:
+
+      <PropertyGroup><GameApp>Chess.ChessApp</GameApp></PropertyGroup>
+
+    The entry point is generated from that name, so a host has no source files of its own.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../src/Gamewright.Desktop/Gamewright.Desktop.csproj" />
+  </ItemGroup>
+
+  <Target Name="GenerateGameEntry" BeforeTargets="BeforeCompile;CoreCompile">
+    <PropertyGroup>
+      <GameEntryFile>$(IntermediateOutputPath)GameEntry.g.cs</GameEntryFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(GameEntryFile)" Overwrite="true" WriteOnlyWhenDifferent="true" Lines="
+internal static class Program
+{
+    [STAThread]
+    private static int Main(string[] args) => Gamewright.Desktop.GameApplication.Run(new global::$(GameApp)(), args)%3B
+}" />
+    <ItemGroup>
+      <Compile Include="$(GameEntryFile)" />
+      <FileWrites Include="$(GameEntryFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,39 @@
+<Project>
+
+  <!--
+    Shared by the browser host of every game. A host project imports this file and names its game:
+
+      <PropertyGroup><GameApp>Chess.ChessApp</GameApp></PropertyGroup>
+
+    The entry point is generated from that name. The host keeps its own wwwroot/index.html.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../src/Gamewright.Browser/Gamewright.Browser.csproj" />
+    <StaticWebAssetFingerprintPattern Include="JS" Pattern="*.js" Expression="#[.{fingerprint}]!" />
+  </ItemGroup>
+
+  <Target Name="GenerateGameEntry" BeforeTargets="BeforeCompile;CoreCompile">
+    <PropertyGroup>
+      <GameEntryFile>$(IntermediateOutputPath)GameEntry.g.cs</GameEntryFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(GameEntryFile)" Overwrite="true" WriteOnlyWhenDifferent="true" Lines="
+[assembly: System.Runtime.Versioning.SupportedOSPlatform(&quot;browser&quot;)]
+
+internal static class Program
+{
+    private static void Main() => new Gamewright.Browser.AppHost(new global::$(GameApp)()).Start()%3B
+}" />
+    <ItemGroup>
+      <Compile Include="$(GameEntryFile)" />
+      <FileWrites Include="$(GameEntryFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

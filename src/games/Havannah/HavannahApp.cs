@@ -20,7 +20,7 @@ public sealed class HavannahApp : GameApp
 
     private static readonly Color BoardBackground = new(0x20, 0x20, 0x20);
     private static readonly Color CellOutline = new(0x87, 0xCE, 0xEB);
-    private static readonly Color[] CellColors = Oklab.GrayTetrahedron(centerLightness: 0.39987f, s: 0.013f);
+    private static readonly Color[] CellColors = OklabColorSpace.GrayTetrahedron(centerLightness: 0.39987f, s: 0.013f);
     private static readonly Color WinHighlight = new Color(0xFF, 0xFF, 0x00).WithAlpha(0.3f);
     private static readonly Color Ink = new(0xE6, 0xE6, 0xE6);
     private static readonly Color ButtonFill = new(0x3A, 0x3A, 0x3A);
@@ -43,7 +43,7 @@ public sealed class HavannahApp : GameApp
 
     private HavannahGame game = new(Radius);
 
-    public HavannahApp() : base(Width, HeaderHeight + BoardSide)
+    public HavannahApp() : base(Width, HeaderHeight + BoardSide, "Havannah")
     {
     }
 

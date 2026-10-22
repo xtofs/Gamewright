@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Gamewright/Gamewright.csproj" />
+    <ProjectReference Include="../../Gamewright/Gamewright.csproj" />
   </ItemGroup>
 
 </Project>

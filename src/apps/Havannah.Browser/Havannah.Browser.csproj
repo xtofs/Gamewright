@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <Import Project="../../../build/Browser.Host.props" />
+
+  <PropertyGroup><GameApp>Havannah.HavannahApp</GameApp></PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../games/Havannah/Havannah.csproj" />
+  </ItemGroup>
+
+</Project>

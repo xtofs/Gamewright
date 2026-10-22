@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <Import Project="../../../build/Browser.Host.props" />
+
+  <PropertyGroup><GameApp>Chess.ChessApp</GameApp></PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../games/Chess/Chess.csproj" />
+  </ItemGroup>
+
+</Project>

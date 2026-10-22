@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../build/Desktop.Host.props" />
+
+  <PropertyGroup><GameApp>Havannah.HavannahApp</GameApp></PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../games/Havannah/Havannah.csproj" />
+    <!-- The image the Havannah frames name, shared with the browser host. -->
+    <AvaloniaResource Include="../Havannah.Browser/wwwroot/pieces-spritesheet.png" Link="pieces-spritesheet.png" />
+  </ItemGroup>
+
+</Project>

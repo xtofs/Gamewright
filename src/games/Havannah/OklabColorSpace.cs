@@ -6,7 +6,7 @@ using Gamewright;
 /// Colors from the OKLab color space (https://en.wikipedia.org/wiki/Oklab_color_space), used to pick
 /// board colors that differ evenly in perceived lightness and hue.
 /// </summary>
-internal static class Oklab
+internal static class OklabColorSpace
 {
     /// <summary>Converts an OKLab color to sRGB.</summary>
     public static Color FromOkLab(float lightness, float a, float b, byte alpha = 255)

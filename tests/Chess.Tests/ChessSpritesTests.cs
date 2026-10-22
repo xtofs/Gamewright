@@ -12,7 +12,7 @@ public class ChessSpritesTests
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {
             if (File.Exists(Path.Combine(directory.FullName, "Gamewright.slnx")))
-                return Path.Combine(directory.FullName, "src", "Chess.Browser", "wwwroot", ChessSprites.Image.Path);
+                return Path.Combine(directory.FullName, "src", "apps", "Chess.Browser", "wwwroot", ChessSprites.Image.Path);
         }
         throw new InvalidOperationException("Could not find the repository root.");
     }

@@ -27,7 +27,7 @@ public sealed class ChessApp : GameApp
 
     private ChessBoard board = ChessBoard.NewGame();
 
-    public ChessApp() : base(Width, Height)
+    public ChessApp() : base(Width, Height, "Chess")
     {
     }
 

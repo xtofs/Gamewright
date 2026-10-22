@@ -8,18 +8,23 @@ namespace Gamewright;
 /// </summary>
 public abstract class GameApp
 {
-    protected GameApp(int frameWidth, int frameHeight)
+    protected GameApp(int frameWidth, int frameHeight, string title)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(frameWidth);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(frameHeight);
+        ArgumentException.ThrowIfNullOrWhiteSpace(title);
         FrameWidth = frameWidth;
         FrameHeight = frameHeight;
+        Title = title;
     }
 
     /// <summary>Width of the coordinate space the app draws in; the renderer scales it to the screen.</summary>
     public int FrameWidth { get; }
 
     public int FrameHeight { get; }
+
+    /// <summary>The name a host shows for the game, for example as the window title.</summary>
+    public string Title { get; }
 
     /// <summary>Draws the parts that rarely change. Called again only after <see cref="Invalidation.Static"/>.</summary>
     protected abstract void DrawStatic(Canvas canvas);

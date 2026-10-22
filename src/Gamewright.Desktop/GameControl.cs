@@ -9,7 +9,7 @@ using AvaloniaPoint = global::Avalonia.Point;
 using AvaloniaRect = global::Avalonia.Rect;
 using AvaloniaSize = global::Avalonia.Size;
 
-namespace Gamewright.Avalonia;
+namespace Gamewright.Desktop;
 
 /// <summary>
 /// Shows a <see cref="GameApp"/>: draws its static and dynamic frames, letterboxed into the control,

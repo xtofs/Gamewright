@@ -2,14 +2,16 @@
   <Folder Name="/src/">
     <Project Path="src/Gamewright.Browser/Gamewright.Browser.csproj" />
     <Project Path="src/Gamewright.HexagonalGrid/Gamewright.HexagonalGrid.csproj" />
-    <Project Path="src/Chess.Browser/Chess.Browser.csproj" />
+    <Project Path="src/apps/Chess.Browser/Chess.Browser.csproj" />
     <Project Path="src/Gamewright/Gamewright.csproj" />
-    <Project Path="src/Chess/Chess.csproj" />
-    <Project Path="src/Havannah/Havannah.csproj" />
-    <Project Path="src/Gamewright.Avalonia/Gamewright.Avalonia.csproj" />
-    <Project Path="src/Chess.Avalonia/Chess.Avalonia.csproj" />
-    <Project Path="src/Havannah.Browser/Havannah.Browser.csproj" />
-    <Project Path="src/Havannah.Avalonia/Havannah.Avalonia.csproj" />
+    <Project Path="src/Gamewright.Desktop/Gamewright.Desktop.csproj" />
+    <Project Path="src/apps/Chess.Desktop/Chess.Desktop.csproj" />
+    <Project Path="src/apps/Havannah.Browser/Havannah.Browser.csproj" />
+    <Project Path="src/apps/Havannah.Desktop/Havannah.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/src/games/">
+    <Project Path="src/games/Chess/Chess.csproj" />
+    <Project Path="src/games/Havannah/Havannah.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Chess.Tests/Chess.Tests.csproj" />

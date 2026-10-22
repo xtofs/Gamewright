@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Havannah\Havannah.csproj" />
+    <ProjectReference Include="..\..\src\games\Havannah\Havannah.csproj" />
   </ItemGroup>
 
 </Project>

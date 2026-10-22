@@ -3,7 +3,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using AvaloniaColor = global::Avalonia.Media.Color;
 
-namespace Gamewright.Avalonia;
+namespace Gamewright.Desktop;
 
 /// <summary>A window showing one <see cref="GameApp"/> in a <see cref="GameControl"/>, sized to its frame.</summary>
 public sealed class GameWindow : Window
