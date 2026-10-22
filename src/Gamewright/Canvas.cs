@@ -21,6 +21,9 @@ public sealed class Canvas
 
     public int Height { get; }
 
+    public void DrawRectangle(Rect rect, Paint paint) =>
+            builder.AddPath(Rectangle(rect), paint);
+
     /// <summary>Draws a rectangle; the paint says whether it is filled, stroked or both, and in which order.</summary>
     public void DrawRectangle(float x, float y, float width, float height, Paint paint) =>
         builder.AddPath(Rectangle(x, y, width, height), paint);
@@ -48,7 +51,7 @@ public sealed class Canvas
         TextAlignment alignment = TextAlignment.Start) =>
         builder.AddText(text, x, y, color, font, alignment);
 
-    /// <summary>Draws text centred horizontally and vertically in a rectangle.</summary>
+    /// <summary>Draws text centered horizontally and vertically in a rectangle.</summary>
     public void DrawTextCentered(
         string text,
         Rect rect,
@@ -68,6 +71,12 @@ public sealed class Canvas
         builder.AddSprite(spriteIndex, x, y, width, height);
 
     public Frame Build() => builder.Build();
+
+    private static Action<PathBuilder> Rectangle(Rect rect)
+    {
+        var (x, y, width, height) = rect;
+        return Rectangle(x, y, width, height);
+    }
 
     private static Action<PathBuilder> Rectangle(float x, float y, float width, float height)
     {

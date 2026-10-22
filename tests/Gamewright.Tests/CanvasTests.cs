@@ -40,6 +40,21 @@ public class CanvasTests
     }
 
     [Fact]
+    public void RectangleOverloadDrawsTheSameAsTheFloatOverload()
+    {
+        var withRect = new Canvas(100, 100);
+        withRect.DrawRectangle(new Rect(10, 20, 30, 40), Red);
+        var withFloats = new Canvas(100, 100);
+        withFloats.DrawRectangle(10, 20, 30, 40, Red);
+
+        var (a, b) = (withRect.Build(), withFloats.Build());
+        Assert.Equal(b.Geometry, a.Geometry);
+        Assert.Equal(b.PathData, a.PathData);
+        Assert.Equal(b.Paints, a.Paints);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Canvas(100, 100).DrawRectangle(new Rect(0, 0, 0, 5), Red));
+    }
+
+    [Fact]
     public void StrokeRectangleRecordsAStrokedPath()
     {
         var canvas = new Canvas(100, 100);

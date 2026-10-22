@@ -47,11 +47,11 @@ public class ChessAppTests
             return (frame.Geometry[command.GeometryOffset], frame.Geometry[command.GeometryOffset + 1]);
         }
 
-        // Board at (112, 104), 52px cells, 34px margin: "a" is under the a-file, "8" beside the top rank.
-        Assert.Equal((138f, 104f + 416 + 17), LabelPosition("a"));
-        Assert.Equal((112f - 17, 104f + 26), LabelPosition("8"));
-        Assert.Equal((112f + 7 * 52 + 26, 104f + 416 + 17), LabelPosition("h"));
-        Assert.Equal((112f - 17, 104f + 7 * 52 + 26), LabelPosition("1"));
+        // Board at (112, 104), 52px cells, 24px margin: "a" is under the a-file, "8" beside the top rank.
+        Assert.Equal((138f, 104f + 416 + 12), LabelPosition("a"));
+        Assert.Equal((112f - 12, 104f + 26), LabelPosition("8"));
+        Assert.Equal((112f + 7 * 52 + 26, 104f + 416 + 12), LabelPosition("h"));
+        Assert.Equal((112f - 12, 104f + 7 * 52 + 26), LabelPosition("1"));
     }
 
     [Fact]

@@ -12,7 +12,7 @@ public sealed class ChessApp : GameApp
     private const float BoardY = 104;
     private const float CellSize = 52;
     private const float BoardSize = CellSize * ChessBoard.Size;
-    private const float FrameMargin = 34;
+    private const float FrameMargin = 24;
     private const float PieceSize = 44;
 
     private static readonly Color DarkSquare = new(91, 119, 92);
@@ -35,11 +35,13 @@ public sealed class ChessApp : GameApp
         return Invalidation.Dynamic;
     }
 
+    private static readonly Paint BoardBackground = Paint.Fill(new Color(93, 66, 45));
+    private static readonly StrokeStyle CheckerboardFrame = new StrokeStyle(new Color(38, 43, 39), 3);
+
     protected override void DrawStatic(Canvas canvas)
     {
-        canvas.DrawRectangle(
-            BoardX - FrameMargin, BoardY - FrameMargin, BoardSize + 2 * FrameMargin, BoardSize + 2 * FrameMargin,
-            Paint.Fill(new Color(93, 66, 45)).WithStroke(new Color(215, 183, 126), 4));
+        var rect = new Rect(BoardX - FrameMargin, BoardY - FrameMargin, BoardSize + 2 * FrameMargin, BoardSize + 2 * FrameMargin);
+        canvas.DrawRectangle(rect, BoardBackground);
 
         for (var rank = 0; rank < ChessBoard.Size; rank++)
         {
@@ -50,16 +52,16 @@ public sealed class ChessApp : GameApp
             }
         }
 
-        canvas.DrawRectangle(BoardX, BoardY, BoardSize, BoardSize, new StrokeStyle(new Color(38, 43, 39), 3));
+        canvas.DrawRectangle(BoardX, BoardY, BoardSize, BoardSize, CheckerboardFrame);
         for (var index = 0; index < ChessBoard.Size; index++)
         {
             // File letters sit in the frame margin under each column, rank numbers in the margin beside each row.
             canvas.DrawTextCentered(
-                ((char)('a' + index)).ToString(),
+                $"{(char)('a' + index)}",
                 new Rect(BoardX + index * CellSize, BoardY + BoardSize, CellSize, FrameMargin),
                 Ink);
             canvas.DrawTextCentered(
-                (ChessBoard.Size - index).ToString(),
+                $"{ChessBoard.Size - index}",
                 new Rect(BoardX - FrameMargin, BoardY + index * CellSize, FrameMargin, CellSize),
                 Ink);
         }
