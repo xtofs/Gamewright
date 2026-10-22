@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Havannah.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Gamewright/Gamewright.csproj" />
     <ProjectReference Include="../Gamewright.HexagonalGrid/Gamewright.HexagonalGrid.csproj" />
   </ItemGroup>
