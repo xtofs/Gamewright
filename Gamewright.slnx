@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Gamewright.Browser/Gamewright.Browser.csproj" />
+    <Project Path="src/Gamewright.HexagonalGrid/Gamewright.HexagonalGrid.csproj" />
     <Project Path="src/Chess.Browser/Chess.Browser.csproj" />
     <Project Path="src/Gamewright/Gamewright.csproj" />
     <Project Path="src/Chess/Chess.csproj" />
@@ -10,5 +11,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Chess.Tests/Chess.Tests.csproj" />
     <Project Path="tests/Gamewright.Tests/Gamewright.Tests.csproj" />
+    <Project Path="tests/Gamewright.HexagonalGrid.Tests/Gamewright.HexagonalGrid.Tests.csproj" />
   </Folder>
 </Solution>
