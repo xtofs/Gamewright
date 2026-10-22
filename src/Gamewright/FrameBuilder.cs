@@ -10,6 +10,7 @@ public sealed class FrameBuilder
     private readonly List<TextStyle> textStyles = [];
     private readonly Dictionary<TextStyle, ushort> textStyleIndices = [];
     private readonly List<string> strings = [];
+    private readonly List<string> images = [];
 
     public FrameBuilder AddPath(string path, Paint paint)
     {
@@ -56,17 +57,26 @@ public sealed class FrameBuilder
             throw new ArgumentException("A path must have a fill or a stroke.", nameof(paint));
     }
 
-    public FrameBuilder AddSprite(int spriteIndex, float x, float y, float width, float height)
+    /// <summary>Draws the <paramref name="source"/> region of an image (in image pixels) scaled into <paramref name="destination"/>.</summary>
+    public FrameBuilder AddImage(Image image, Rect source, Rect destination)
     {
-        if (spriteIndex < 0)
-            throw new ArgumentOutOfRangeException(nameof(spriteIndex));
-        if (width <= 0 || height <= 0)
-            throw new ArgumentOutOfRangeException(nameof(width), "Sprite dimensions must be positive.");
+        RequirePositive(source, nameof(source));
+        RequirePositive(destination, nameof(destination));
+        float[] values =
+            [source.X, source.Y, source.Width, source.Height,
+             destination.X, destination.Y, destination.Width, destination.Height];
+        ValidateGeometry(values);
 
-        ValidateGeometry([x, y, width, height]);
-        var geometryOffset = AddGeometry([x, y, width, height]);
-        commands.Add(new DrawCommand(DrawCommandType.Image, 0, 0, geometryOffset, 4, 0, 0, spriteIndex));
+        var geometryOffset = AddGeometry(values);
+        commands.Add(new DrawCommand(
+            DrawCommandType.Image, 0, 0, geometryOffset, values.Length, 0, 0, AddImageName(image.Path)));
         return this;
+    }
+
+    private static void RequirePositive(Rect rect, string name)
+    {
+        if (!(rect.Width > 0) || !(rect.Height > 0))
+            throw new ArgumentOutOfRangeException(name, "Rectangle dimensions must be positive.");
     }
 
     public FrameBuilder AddText(
@@ -105,7 +115,7 @@ public sealed class FrameBuilder
     }
 
     public Frame Build() =>
-        new Frame([.. commands], [.. pathData], [.. geometry], [.. paints], [.. textStyles], [.. strings]);
+        new Frame([.. commands], [.. pathData], [.. geometry], [.. paints], [.. textStyles], [.. strings], [.. images]);
 
     private int AddGeometry(ReadOnlySpan<float> values)
     {
@@ -140,6 +150,15 @@ public sealed class FrameBuilder
         var index = (ushort)(table.Count - 1);
         indices[style] = index;
         return index;
+    }
+
+    private int AddImageName(string path)
+    {
+        var index = images.IndexOf(path);
+        if (index >= 0)
+            return index;
+        images.Add(path);
+        return images.Count - 1;
     }
 
     private int AddString(string value)

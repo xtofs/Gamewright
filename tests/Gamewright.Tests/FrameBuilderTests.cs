@@ -57,33 +57,59 @@ public class FrameBuilderTests
     }
 
     [Fact]
-    public void SpriteStoresIndexAndDestinationRectangle()
+    public void ImageStoresItsPathAndBothRectangles()
     {
-        var frame = new FrameBuilder().AddSprite(17, 1, 2, 3, 4).Build();
+        var frame = new FrameBuilder()
+            .AddImage(new Image("pieces.png"), new Rect(10, 20, 200, 200), new Rect(1, 2, 3, 4))
+            .Build();
 
         var command = Assert.Single(frame.Commands);
         Assert.Equal(DrawCommandType.Image, command.Type);
-        Assert.Equal(17, command.Data);
-        Assert.Equal(4, command.GeometryLength);
-        Assert.Equal([1f, 2, 3, 4], frame.Geometry);
+        Assert.Equal(0, command.Data);
+        Assert.Equal(8, command.GeometryLength);
+        Assert.Equal([10f, 20, 200, 200, 1, 2, 3, 4], frame.Geometry);
+        Assert.Equal(["pieces.png"], frame.Images);
     }
 
     [Fact]
-    public void SpriteRejectsBadArguments()
+    public void ImagePathsAreSharedByName()
+    {
+        var a = new Image("a.png");
+        var b = new Image("b.png");
+        var source = new Rect(0, 0, 10, 10);
+        var frame = new FrameBuilder()
+            .AddImage(a, source, new Rect(0, 0, 1, 1))
+            .AddImage(b, source, new Rect(0, 0, 1, 1))
+            .AddImage(a, source, new Rect(5, 5, 1, 1))
+            .Build();
+
+        Assert.Equal(["a.png", "b.png"], frame.Images);
+        Assert.Equal([0, 1, 0], frame.Commands.Select(static c => c.Data));
+    }
+
+    [Fact]
+    public void ImageRejectsBadRectangles()
     {
         var builder = new FrameBuilder();
-        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddSprite(-1, 0, 0, 1, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddSprite(0, 0, 0, 0, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddSprite(0, float.NaN, 0, 1, 1));
+        var image = new Image("a.png");
+        var good = new Rect(0, 0, 1, 1);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddImage(image, new Rect(0, 0, 0, 1), good));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddImage(image, good, new Rect(0, 0, 1, -1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddImage(image, good, new Rect(float.NaN, 0, 1, 1)));
     }
 
     [Fact]
     public void FailedAddLeavesFrameUntouched()
     {
         var builder = new FrameBuilder();
-        Assert.Throws<ArgumentOutOfRangeException>(() => builder.AddSprite(0, float.NaN, 0, 1, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => builder.AddImage(new Image("a.png"), new Rect(0, 0, 1, 1), new Rect(float.NaN, 0, 1, 1)));
 
-        Assert.Empty(builder.Build().Commands);
+        var frame = builder.Build();
+        Assert.Empty(frame.Commands);
+        Assert.Empty(frame.Images);
+        Assert.Empty(frame.Geometry);
     }
 
     [Fact]
@@ -131,9 +157,9 @@ public class FrameBuilderTests
     }
 
     [Fact]
-    public void SpritesAddNoStyles()
+    public void ImagesAddNoStyles()
     {
-        var frame = new FrameBuilder().AddSprite(3, 0, 0, 10, 10).Build();
+        var frame = new FrameBuilder().AddImage(new Image("a.png"), new Rect(0, 0, 10, 10), new Rect(0, 0, 5, 5)).Build();
 
         Assert.Empty(frame.Paints);
         Assert.Empty(frame.TextStyles);

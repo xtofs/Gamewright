@@ -23,8 +23,6 @@ sealed partial class AppHost
         try
         {
             ConfigureFrame(app.FrameWidth, app.FrameHeight);
-            if (app.SpriteSheet is { } sheet)
-                ConfigureSprites(sheet.ImagePath, sheet.Columns, sheet.CellSize);
             SetClickHandler(clickHandler);
             Render(Invalidation.All);
         }

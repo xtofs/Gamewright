@@ -104,18 +104,18 @@ public class CanvasTests
     }
 
     [Fact]
-    public void TextAndSpritesAreRecordedInDrawOrder()
+    public void ShapesImagesAndTextAreRecordedInDrawOrder()
     {
         var canvas = new Canvas(100, 100);
         canvas.DrawRectangle(0, 0, 10, 10, Red);
-        canvas.DrawSprite(14, 1, 2, 3, 4);
+        canvas.DrawImage(new Image("a.png"), new Rect(0, 0, 200, 200), new Rect(1, 2, 3, 4));
         canvas.DrawText("hi", 5, 6, Red, FontIndex.Heading, TextAlignment.Center);
 
         var frame = canvas.Build();
         Assert.Equal(
             [DrawCommandType.Path, DrawCommandType.Image, DrawCommandType.Text],
             frame.Commands.Select(static c => c.Type));
-        Assert.Equal(14, frame.Commands[1].Data);
+        Assert.Equal(["a.png"], frame.Images);
         Assert.Equal(["hi"], frame.Strings);
     }
 

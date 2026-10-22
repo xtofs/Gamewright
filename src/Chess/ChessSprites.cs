@@ -2,21 +2,25 @@ namespace Chess;
 
 using Gamewright;
 
-/// <summary>The chess sprite sheet and where the pieces are on it: white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
+/// <summary>Where the chess pieces are on the sprite image (<c>sprites.png</c>): white in row 2, black in row 3, in <see cref="PieceKind"/> order.</summary>
 public static class ChessSprites
 {
-    public static readonly SpriteSheetLayout Sheet = new(columns: 7, rows: 4, cellSize: 200, imagePath: "sprites.png");
+    public static readonly Image Image = new("sprites.png");
+
+    /// <summary>Width and height of one cell of the image, in pixels.</summary>
+    public const int CellSize = 200;
 
     private const int WhiteRow = 2;
     private const int BlackRow = 3;
 
-    public static int Index(PieceColor color, PieceKind kind)
+    /// <summary>The column and row of a piece's cell.</summary>
+    public static (int Column, int Row) Locate(Piece piece)
     {
-        if (!Enum.IsDefined(color))
-            throw new ArgumentOutOfRangeException(nameof(color));
-        if (!Enum.IsDefined(kind))
-            throw new ArgumentOutOfRangeException(nameof(kind));
+        if (!Enum.IsDefined(piece.Color))
+            throw new ArgumentOutOfRangeException(nameof(piece));
+        if (!Enum.IsDefined(piece.Kind))
+            throw new ArgumentOutOfRangeException(nameof(piece));
 
-        return Sheet.Index(color == PieceColor.White ? WhiteRow : BlackRow, (int)kind);
+        return ((int)piece.Kind, piece.Color == PieceColor.White ? WhiteRow : BlackRow);
     }
 }

@@ -58,6 +58,7 @@ type Frame = {
     pathData: Uint8Array;
     geometry: Float32Array;
     strings: string[];
+    images: string[];
     paints: Paint[];
     textStyles: TextStyle[];
 };
@@ -73,19 +74,27 @@ const staticContext = getRequiredContext(staticCanvas);
 let frameWidth = 0;
 let frameHeight = 0;
 
-// Sprite sheet layout, supplied by the host (the app's SpriteSheetLayout) before the first frame.
-let sheetColumns = 0;
-let spriteSize = 0;
+// Images named by frames, by path (relative to the page). Each is loaded the first time a frame draws it.
+const loadedImages = new Map<string, HTMLImageElement>();
 
-const spriteSheet = new Image();
-spriteSheet.addEventListener('load', () => {
-    staticCacheWidth = 0;
-    staticCacheHeight = 0;
-    renderScene();
-}, { once: true });
-spriteSheet.addEventListener('error', () => {
-    console.error(`Unable to load the sprite sheet ${spriteSheet.src}.`);
-}, { once: true });
+function getImage(path: string): HTMLImageElement {
+    let image = loadedImages.get(path);
+    if (!image) {
+        image = new Image();
+        image.addEventListener('load', () => {
+            staticCacheWidth = 0;
+            staticCacheHeight = 0;
+            renderScene();
+        }, { once: true });
+        image.addEventListener('error', () => {
+            console.error(`Unable to load the image ${path}.`);
+        }, { once: true });
+        image.src = path;
+        loadedImages.set(path, image);
+    }
+    return image;
+}
+
 let staticFrame: Frame | undefined;
 let dynamicFrame: Frame | undefined;
 let staticCacheWidth = 0;
@@ -230,14 +239,7 @@ function drawFrame(target: CanvasRenderingContext2D, frame: Frame): void {
                 drawText(target, frame, command, readTextStyle(frame, command.styleIndex));
                 break;
             case DrawCommandType.Image:
-                drawSprite(
-                    target,
-                    command.data,
-                    readGeometry(frame, command, 0),
-                    readGeometry(frame, command, 1),
-                    readGeometry(frame, command, 2),
-                    readGeometry(frame, command, 3)
-                );
+                drawImage(target, frame, command);
                 break;
             default:
                 throw new Error(`Unknown draw command type: ${command.type}`);
@@ -470,28 +472,25 @@ function drawText(target: CanvasRenderingContext2D, frame: Frame, command: DrawC
     target.fillText(text, readGeometry(frame, command, 0), readGeometry(frame, command, 1));
 }
 
-function drawSprite(
-    target: CanvasRenderingContext2D,
-    spriteIndex: number,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-): void {
-    if (sheetColumns === 0 || spriteSize === 0) {
-        throw new Error('The sprite sheet layout was not configured.');
+// The source rectangle of the image (in image pixels) scaled into the destination rectangle.
+function drawImage(target: CanvasRenderingContext2D, frame: Frame, command: DrawCommand): void {
+    const path = frame.images[command.data];
+    if (path === undefined) {
+        throw new Error(`Frame image index ${command.data} is out of range.`);
     }
-    if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+
+    const image = getImage(path);
+    if (image.complete && image.naturalWidth > 0) {
         target.drawImage(
-            spriteSheet,
-            (spriteIndex % sheetColumns) * spriteSize,
-            Math.floor(spriteIndex / sheetColumns) * spriteSize,
-            spriteSize,
-            spriteSize,
-            x,
-            y,
-            width,
-            height
+            image,
+            readGeometry(frame, command, 0),
+            readGeometry(frame, command, 1),
+            readGeometry(frame, command, 2),
+            readGeometry(frame, command, 3),
+            readGeometry(frame, command, 4),
+            readGeometry(frame, command, 5),
+            readGeometry(frame, command, 6),
+            readGeometry(frame, command, 7)
         );
     }
 }
@@ -517,7 +516,8 @@ function decodeFrame(
     geometryView: Uint8Array,
     paintView: Uint8Array,
     textStyleView: Uint8Array,
-    strings: string[]
+    strings: string[],
+    images: string[]
 ): Frame {
     const commandBytes = commandView.slice();
     const geometryBytes = geometryView.slice();
@@ -577,6 +577,7 @@ function decodeFrame(
         pathData: pathData.slice(),
         geometry: new Float32Array(geometryBytes.buffer),
         strings,
+        images,
         paints,
         textStyles
     };
@@ -587,12 +588,6 @@ function configureFrame(width: number, height: number): void {
     frameHeight = height;
     // The canvas box defaults to the frame's shape; a page may give it any other shape.
     canvas.style.aspectRatio = `${width} / ${height}`;
-}
-
-function configureSprites(imagePath: string, columns: number, cellSize: number): void {
-    sheetColumns = columns;
-    spriteSize = cellSize;
-    spriteSheet.src = imagePath;
 }
 
 function reportError(message: string): void {
@@ -608,9 +603,10 @@ function submitFrame(
     geometry: Uint8Array,
     paints: Uint8Array,
     textStyles: Uint8Array,
-    strings: string[]
+    strings: string[],
+    images: string[]
 ): void {
-    const byteLength = frameByteLength([commands, pathData, geometry, paints, textStyles], strings);
+    const byteLength = frameByteLength([commands, pathData, geometry, paints, textStyles], [...strings, ...images]);
     stats.submits++;
     stats.bytes += byteLength;
     stats.totalBytes += byteLength;
@@ -620,7 +616,7 @@ function submitFrame(
         stats.lastDynamicBytes = byteLength;
     }
 
-    const frame = decodeFrame(commands, pathData, geometry, paints, textStyles, strings);
+    const frame = decodeFrame(commands, pathData, geometry, paints, textStyles, strings, images);
     if (isStatic) {
         staticFrame = frame;
         staticCacheWidth = 0;
@@ -664,7 +660,7 @@ try {
     const { setModuleImports, runMain } = await dotnet.create();
 
     setModuleImports('main.js', {
-        dom: { submitFrame, configureFrame, configureSprites, setClickHandler, reportError }
+        dom: { submitFrame, configureFrame, setClickHandler, reportError }
     });
 
     await runMain();

@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using AvaloniaColor = global::Avalonia.Media.Color;
 using AvaloniaRect = global::Avalonia.Rect;
 
@@ -18,17 +19,22 @@ public sealed class GameControl : Control
     private const double FrameEpsilon = 1e-6;
 
     private readonly GameApp app;
-    private readonly IImage? spriteSheet;
+    private readonly Func<string, Bitmap?> loadImage;
+    private readonly Dictionary<string, Bitmap?> images = [];
     private Frame staticFrame;
     private Frame dynamicFrame;
 
     /// <param name="app">The app to show.</param>
-    /// <param name="spriteSheet">The image named by the app's <see cref="GameApp.SpriteSheet"/>, if it has one.</param>
-    public GameControl(GameApp app, IImage? spriteSheet = null)
+    /// <param name="loadImage">
+    /// Loads the image a frame names by path, or returns null if there is none. Called once per path;
+    /// the result is kept.
+    /// </param>
+    public GameControl(GameApp app, Func<string, Bitmap?> loadImage)
     {
         ArgumentNullException.ThrowIfNull(app);
+        ArgumentNullException.ThrowIfNull(loadImage);
         this.app = app;
-        this.spriteSheet = spriteSheet;
+        this.loadImage = loadImage;
         staticFrame = app.RenderStatic();
         dynamicFrame = app.RenderDynamic();
     }
@@ -91,7 +97,7 @@ public sealed class GameControl : Control
                     DrawText(context, frame, command);
                     break;
                 case DrawCommandType.Image:
-                    DrawSprite(context, frame, command);
+                    DrawImage(context, frame, command);
                     break;
                 default:
                     throw new InvalidOperationException($"Unknown draw command type: {command.Type}");
@@ -278,22 +284,29 @@ public sealed class GameControl : Control
         context.DrawText(text, new Point(x, y + baselineBelowY - text.Baseline));
     }
 
-    private void DrawSprite(DrawingContext context, Frame frame, DrawCommand command)
+    private void DrawImage(DrawingContext context, Frame frame, DrawCommand command)
     {
-        if (spriteSheet is null || app.SpriteSheet is not { } layout)
+        if (command.Data < 0 || command.Data >= frame.Images.Length)
+            throw new InvalidOperationException($"Frame image index {command.Data} is out of range.");
+        if (command.GeometryOffset < 0 || command.GeometryLength < 8 || command.GeometryOffset + 8 > frame.Geometry.Length)
+            throw new InvalidOperationException("Draw command Image has incomplete geometry.");
+
+        var path = frame.Images[command.Data];
+        if (!images.TryGetValue(path, out var bitmap))
+            images[path] = bitmap = loadImage(path);
+        if (bitmap is null)
             return;
 
-        var x = frame.Geometry[command.GeometryOffset];
-        var y = frame.Geometry[command.GeometryOffset + 1];
-        var width = frame.Geometry[command.GeometryOffset + 2];
-        var height = frame.Geometry[command.GeometryOffset + 3];
+        var g = frame.Geometry;
+        var o = command.GeometryOffset;
 
-        // The image may report its size in device independent units, so scale the cell to match.
-        var imageScale = spriteSheet.Size.Width / layout.Width;
-        var cell = layout.CellSize * imageScale;
-        var column = command.Data % layout.Columns;
-        var row = command.Data / layout.Columns;
-        context.DrawImage(spriteSheet, new AvaloniaRect(column * cell, row * cell, cell, cell), new AvaloniaRect(x, y, width, height));
+        // The bitmap may report its size in device independent units (from its DPI), while the source
+        // rectangle is in pixels, so scale the rectangle to match.
+        var scale = bitmap.Size.Width / bitmap.PixelSize.Width;
+        context.DrawImage(
+            bitmap,
+            new AvaloniaRect(g[o] * scale, g[o + 1] * scale, g[o + 2] * scale, g[o + 3] * scale),
+            new AvaloniaRect(g[o + 4], g[o + 5], g[o + 6], g[o + 7]));
     }
 
     // The same fonts as the browser renderer: 16px body text and 24px semi-bold headings.

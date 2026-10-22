@@ -30,6 +30,7 @@ Words in capitals (MUST, MAY) are meant as in RFC 2119.
 | Paints     | `Paint[]`       | 16 bytes per paint       | how paths are painted                           |
 | TextStyles | `TextStyle[]`   | 8 bytes per style        | color and font of text                          |
 | Strings    | `string[]`      | string array             | text to draw                                    |
+| Images     | `string[]`      | string array             | paths of the images that image commands draw    |
 
 Commands refer into the other parts by offset and length. A command's ranges MUST lie inside the
 buffers, and styles are shared: many commands may use the same table entry.
@@ -40,14 +41,14 @@ buffers, and styles are shared: many commands may use the same table entry.
 
 | Offset | Size | Field          | Meaning                                                               |
 | ------ | ---- | -------------- | --------------------------------------------------------------------- |
-| 0      | u16  | Type           | 1 Path, 2 Text, 3 Image (sprite)                                      |
+| 0      | u16  | Type           | 1 Path, 2 Text, 3 Image                                               |
 | 2      | u16  | StyleIndex     | index into Paints (Path) or TextStyles (Text); 0 and unused for Image |
 | 4      | u16  | Flags          | see §3                                                                |
 | 6      | i32  | GeometryOffset | first float of this command in Geometry                               |
 | 10     | i32  | GeometryLength | number of floats                                                      |
 | 14     | i32  | PathDataOffset | first opcode in PathData (Path only, else 0)                          |
 | 18     | i32  | PathDataLength | number of opcodes (Path only, else 0)                                 |
-| 22     | i32  | Data           | Text: index into Strings. Image: sprite index. Path: 0                |
+| 22     | i32  | Data           | Text: index into Strings. Image: index into Images. Path: 0           |
 
 `Paint` (16 bytes): `u32 FillRgba` @0, `u32 StrokeRgba` @4, `f32 StrokeWidth` @8, `u32 Mode` @12.
 `TextStyle` (8 bytes): `u32 ColorRgba` @0, `i32 Font` @4.
@@ -61,7 +62,7 @@ unused and MUST be 0.
 | ------------- | ---------- | -------------------------------------- | ---------------------------------------- | ------------------------------------- | ------------ |
 | **Path** (1)  | Paints     | `Closed`                               | exactly the operands of its opcodes (§4) | the opcodes, `PathDataLength` of them | 0            |
 | **Text** (2)  | TextStyles | `AlignCenter` or `AlignEnd` (not both) | 2 floats: x, y                           | none                                  | string index |
-| **Image** (3) | unused (0) | none                                   | 4 floats: x, y, width, height            | none                                  | sprite index |
+| **Image** (3) | unused (0) | none                                   | 8 floats: source x, y, width, height; destination x, y, width, height | none | image index |
 
 **Text.** Draws `Strings[Data]` in the text style, on one line. `x` is the left edge for no
 alignment flag, the center for `AlignCenter` and the right edge for `AlignEnd`. `y` is the
@@ -70,10 +71,13 @@ _vertical middle of the text_, defined as the middle of the em square: the basel
 Text is filled with the style's color, no outline. A text command with both alignment flags is
 invalid; renderers MAY treat it as centered.
 
-**Image.** Draws one cell of the app's sprite sheet (the `SpriteSheetLayout` the app declares)
-into the rectangle, scaled to fit it exactly. The cell for sprite index `i` is column
-`i % Columns`, row `i / Columns`, each `CellSize` pixels square. A renderer whose image has not
-loaded yet draws nothing and MAY draw again when it has.
+**Image.** Draws part of the image `Images[Data]`: the source rectangle, in pixels of the image,
+scaled to fill the destination rectangle, in frame units. Both rectangles have positive width and
+height. The path is relative to the host's resources (the page's base URL in a browser, the app's
+resources on the desktop); a host loads an image the first time a frame names it and keeps it. A
+renderer whose image has not loaded yet draws nothing and MAY draw again when it has. The frame
+knows nothing about sprite sheets or atlases: those are helpers an app builds on top of this
+command (`Gamewright.Sprites`), and they reduce to a source rectangle.
 
 ## 4. Path operations
 
@@ -143,9 +147,9 @@ is invalid.
 ## 6. What a renderer must reject
 
 A renderer MUST fail, and not draw a partial or wrong result, for: an unknown command type, an
-unknown opcode, a style index outside its table, a string index outside `Strings`, a command range
-outside its buffer, a path whose geometry length does not match its opcodes, an unknown paint mode
-or an unknown font.
+unknown opcode, a style index outside its table, a string index outside `Strings`, an image index
+outside `Images`, a command range outside its buffer, a path whose geometry length does not match
+its opcodes, an unknown paint mode or an unknown font.
 
 ## 7. Implementations
 

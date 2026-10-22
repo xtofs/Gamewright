@@ -17,13 +17,11 @@ sealed partial class AppHost
         [JSMarshalAs<JSType.MemoryView>] Span<byte> geometry,
         [JSMarshalAs<JSType.MemoryView>] Span<byte> paints,
         [JSMarshalAs<JSType.MemoryView>] Span<byte> textStyles,
-        [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings);
+        [JSMarshalAs<JSType.Array<JSType.String>>] string[] strings,
+        [JSMarshalAs<JSType.Array<JSType.String>>] string[] images);
 
     [JSImport("dom.configureFrame", "main.js")]
     private static partial void ConfigureFrame(int width, int height);
-
-    [JSImport("dom.configureSprites", "main.js")]
-    private static partial void ConfigureSprites(string imagePath, int columns, int cellSize);
 
     // JavaScript keeps the callback and calls it with the click position in frame coordinates.
     [JSImport("dom.setClickHandler", "main.js")]
@@ -40,5 +38,6 @@ sealed partial class AppHost
         MemoryMarshal.AsBytes(frame.Geometry.AsSpan()),
         MemoryMarshal.AsBytes(frame.Paints.AsSpan()),
         MemoryMarshal.AsBytes(frame.TextStyles.AsSpan()),
-        frame.Strings);
+        frame.Strings,
+        frame.Images);
 }

@@ -1,63 +1,76 @@
 using System.Buffers.Binary;
 using Chess;
 using Gamewright;
+using Gamewright.Sprites;
 
 namespace Chess.Tests;
 
 public class ChessSpritesTests
 {
-    private static string SpritePath()
+    private static string ImageFile()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {
             if (File.Exists(Path.Combine(directory.FullName, "Gamewright.slnx")))
-                return Path.Combine(directory.FullName, "src", "Chess.Browser", "wwwroot", ChessSprites.Sheet.ImagePath);
+                return Path.Combine(directory.FullName, "src", "Chess.Browser", "wwwroot", ChessSprites.Image.Path);
         }
         throw new InvalidOperationException("Could not find the repository root.");
     }
 
-    [Fact]
-    public void LayoutMatchesTheImage()
+    private static (int Width, int Height) ImageSize()
     {
         // PNG: 8-byte signature, then the IHDR chunk (length, type) before width and height.
         var header = new byte[24];
-        using (var stream = File.OpenRead(SpritePath()))
+        using (var stream = File.OpenRead(ImageFile()))
             stream.ReadExactly(header);
-
-        Assert.Equal(ChessSprites.Sheet.Width, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(16, 4)));
-        Assert.Equal(ChessSprites.Sheet.Height, BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(20, 4)));
+        return (BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(16, 4)), BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(20, 4)));
     }
 
+    private static IEnumerable<Piece> AllPieces() =>
+        from color in Enum.GetValues<PieceColor>()
+        from kind in Enum.GetValues<PieceKind>()
+        select new Piece(color, kind);
+
     [Fact]
-    public void IndexCountsRowByRow()
+    public void EveryPiecesCellLiesInsideTheImage()
     {
-        Assert.Equal(0, ChessSprites.Sheet.Index(0, 0));
-        Assert.Equal(ChessSprites.Sheet.Columns, ChessSprites.Sheet.Index(1, 0));
-        Assert.Equal(ChessSprites.Sheet.Count - 1, ChessSprites.Sheet.Index(ChessSprites.Sheet.Rows - 1, ChessSprites.Sheet.Columns - 1));
+        var (width, height) = ImageSize();
+        var sheet = new SpriteSheet(ChessSprites.Image, ChessSprites.CellSize);
+
+        foreach (var piece in AllPieces())
+        {
+            var (column, row) = ChessSprites.Locate(piece);
+            var cell = sheet[column, row].Source;
+            Assert.True(cell.X + cell.Width <= width && cell.Y + cell.Height <= height, $"{piece} is outside the image.");
+        }
     }
 
     [Fact]
-    public void ChessSpritesAreDistinctAndInsideTheSheet()
+    public void ImageIsAWholeNumberOfCells()
     {
-        var indices = (from color in Enum.GetValues<PieceColor>()
-                       from kind in Enum.GetValues<PieceKind>()
-                       select ChessSprites.Index(color, kind)).ToArray();
+        var (width, height) = ImageSize();
 
-        Assert.Equal(12, indices.Distinct().Count());
-        Assert.All(indices, index => Assert.InRange(index, 0, ChessSprites.Sheet.Count - 1));
+        Assert.Equal(0, width % ChessSprites.CellSize);
+        Assert.Equal(0, height % ChessSprites.CellSize);
     }
 
     [Fact]
-    public void ChessSpritesMatchTheSheetArtwork()
+    public void PiecesHaveDistinctCells() =>
+        Assert.Equal(12, AllPieces().Select(ChessSprites.Locate).Distinct().Count());
+
+    [Fact]
+    public void ColumnsFollowPieceKindAndRowsFollowColor()
     {
-        // Row 2 is the white set and row 3 the black set, each starting with the king.
-        Assert.Equal(14, ChessSprites.Index(PieceColor.White, PieceKind.King));
-        Assert.Equal(19, ChessSprites.Index(PieceColor.White, PieceKind.Pawn));
-        Assert.Equal(21, ChessSprites.Index(PieceColor.Black, PieceKind.King));
-        Assert.Equal(26, ChessSprites.Index(PieceColor.Black, PieceKind.Pawn));
+        Assert.Equal((0, 2), ChessSprites.Locate(new Piece(PieceColor.White, PieceKind.King)));
+        Assert.Equal((5, 2), ChessSprites.Locate(new Piece(PieceColor.White, PieceKind.Pawn)));
+        Assert.Equal((0, 3), ChessSprites.Locate(new Piece(PieceColor.Black, PieceKind.King)));
+        Assert.Equal((5, 3), ChessSprites.Locate(new Piece(PieceColor.Black, PieceKind.Pawn)));
     }
 
     [Fact]
-    public void ChessSpritesRejectUnknownValues() =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => ChessSprites.Index((PieceColor)9, PieceKind.King));
+    public void UnknownValuesAreRejected()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => ChessSprites.Locate(new Piece((PieceColor)9, PieceKind.King)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ChessSprites.Locate(new Piece(PieceColor.White, (PieceKind)9)));
+    }
 }

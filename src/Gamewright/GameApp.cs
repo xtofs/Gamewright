@@ -8,22 +8,18 @@ namespace Gamewright;
 /// </summary>
 public abstract class GameApp
 {
-    protected GameApp(int frameWidth, int frameHeight, SpriteSheetLayout? spriteSheet = null)
+    protected GameApp(int frameWidth, int frameHeight)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(frameWidth);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(frameHeight);
         FrameWidth = frameWidth;
         FrameHeight = frameHeight;
-        SpriteSheet = spriteSheet;
     }
 
     /// <summary>Width of the coordinate space the app draws in; the renderer scales it to the screen.</summary>
     public int FrameWidth { get; }
 
     public int FrameHeight { get; }
-
-    /// <summary>Layout of the sprite sheet image <see cref="Canvas.DrawSprite"/> draws from, or null if the app draws no sprites.</summary>
-    public SpriteSheetLayout? SpriteSheet { get; }
 
     /// <summary>Draws the parts that rarely change. Called again only after <see cref="Invalidation.Static"/>.</summary>
     protected abstract void DrawStatic(Canvas canvas);

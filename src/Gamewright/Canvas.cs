@@ -66,9 +66,12 @@ public sealed class Canvas
         DrawText(text, rect.X + rect.Width / 2, rect.Y + rect.Height / 2, color, font, TextAlignment.Center);
     }
 
-    /// <summary>Draws one cell of the sprite sheet (see <see cref="SpriteSheetLayout"/>) scaled into the rectangle.</summary>
-    public void DrawSprite(int spriteIndex, float x, float y, float width, float height) =>
-        builder.AddSprite(spriteIndex, x, y, width, height);
+    /// <summary>
+    /// Draws part of an image: the <paramref name="source"/> rectangle, in pixels of the image, scaled
+    /// to fill <paramref name="destination"/>, in frame units.
+    /// </summary>
+    public void DrawImage(Image image, Rect source, Rect destination) =>
+        builder.AddImage(image, source, destination);
 
     public Frame Build() => builder.Build();
 

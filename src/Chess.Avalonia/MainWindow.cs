@@ -18,9 +18,12 @@ public class MainWindow : Window
         Height = app.FrameHeight;
         Background = new SolidColorBrush(Color.FromRgb(0x10, 0x15, 0x22));
 
-        // The sprite image is the same file the browser host serves, linked in as an Avalonia resource.
-        using var stream = AssetLoader.Open(new Uri($"avares://Chess.Avalonia/{ChessSprites.Sheet.ImagePath}"));
-        Game = new GameControl(app, new Bitmap(stream));
+        // Images are the same files the browser host serves, linked in as Avalonia resources.
+        Game = new GameControl(app, path =>
+        {
+            using var stream = AssetLoader.Open(new Uri($"avares://Chess.Avalonia/{path}"));
+            return new Bitmap(stream);
+        });
         Content = Game;
     }
 

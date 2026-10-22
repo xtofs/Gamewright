@@ -1,6 +1,7 @@
 namespace Chess;
 
 using Gamewright;
+using Gamewright.Sprites;
 
 /// <summary>A click-to-move chess board drawn with a <see cref="Canvas"/>; see <see cref="ChessBoard"/> for the rules (there are none).</summary>
 public sealed class ChessApp : GameApp
@@ -21,9 +22,12 @@ public sealed class ChessApp : GameApp
     private static readonly Color LastMoveTint = new(231, 194, 77, 70);
     private static readonly Color Ink = new(235, 220, 187);
 
+    private readonly SpriteAtlas<Piece> pieces =
+        new(new SpriteSheet(ChessSprites.Image, ChessSprites.CellSize), ChessSprites.Locate);
+
     private ChessBoard board = ChessBoard.NewGame();
 
-    public ChessApp() : base(Width, Height, ChessSprites.Sheet)
+    public ChessApp() : base(Width, Height)
     {
     }
 
@@ -82,7 +86,7 @@ public sealed class ChessApp : GameApp
         foreach (var (square, piece) in board.Pieces())
         {
             var (x, y) = SquareOrigin(square);
-            canvas.DrawSprite(ChessSprites.Index(piece.Color, piece.Kind), x + inset, y + inset, PieceSize, PieceSize);
+            canvas.DrawSprite(pieces[piece], new Rect(x + inset, y + inset, PieceSize, PieceSize));
         }
 
         canvas.DrawText($"{board.Turn} to move", BoardX + BoardSize, 43, Ink, FontIndex.Body, TextAlignment.End);
