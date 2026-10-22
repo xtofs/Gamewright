@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    The generic browser host: AppHost (C#) and main.ts (the renderer), delivered to apps as the static
+    web asset _content/Gamewright.Browser/main.js. It holds nothing specific to a game.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Required by the [JSImport] source generator -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Gamewright/Gamewright.csproj" />
+  </ItemGroup>
+
+  <!-- Compile wwwroot/main.ts to wwwroot/main.js before static web assets are collected. -->
+  <Target Name="BuildTypeScript" BeforeTargets="BeforeBuild;ResolveProjectStaticWebAssets" Inputs="wwwroot/main.ts;types/dotnet.d.ts;tsconfig.json;package.json" Outputs="wwwroot/main.js">
+    <Exec Command="npm install --no-audit --no-fund" Condition="!Exists('node_modules')" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <ItemGroup>
+    <StaticWebAssetFingerprintPattern Include="JS" Pattern="*.js" Expression="#[.{fingerprint}]!" />
+  </ItemGroup>
+
+</Project>

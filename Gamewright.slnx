@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Gamewright.Browser/Gamewright.Browser.csproj" />
     <Project Path="src/Chess.Browser/Chess.Browser.csproj" />
     <Project Path="src/Gamewright/Gamewright.csproj" />
     <Project Path="src/Chess/Chess.csproj" />

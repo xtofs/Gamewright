@@ -1,4 +1,5 @@
 using Chess;
+using Gamewright.Browser;
 
 internal class Program
 {

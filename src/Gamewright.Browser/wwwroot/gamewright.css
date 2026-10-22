@@ -1,0 +1,51 @@
+/* Styles for the page elements the browser host expects: #surface, #error and #stats (see main.ts). */
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #101522;
+  color: #f2f5fa;
+}
+
+body {
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+canvas {
+  cursor: pointer;
+  touch-action: manipulation;
+  display: block;
+  width: 100%;
+  border: 1px solid #52617a;
+  border-radius: 0.5rem;
+}
+
+#error {
+  white-space: pre-wrap;
+  padding: 0.5rem 1rem;
+  border: 1px solid #c0504d;
+  border-radius: 0.5rem;
+  color: #ffb3b0;
+}
+
+#stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #52617a;
+  border-radius: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#stats dt {
+  font-size: 0.75rem;
+  color: #9aa8bf;
+}
+
+#stats dd {
+  margin: 0;
+  font-size: 1.1rem;
+}

@@ -1,9 +1,11 @@
 using Gamewright;
 
+namespace Gamewright.Browser;
+
 // Hosts a GameApp in the page: sends its frames to the renderer and receives input from main.ts.
 // Only the frames named by an Invalidation are drawn and sent again. The calls into JavaScript
 // are in AppHost.Interop.cs.
-sealed partial class AppHost
+public sealed partial class AppHost
 {
     private readonly GameApp app;
 

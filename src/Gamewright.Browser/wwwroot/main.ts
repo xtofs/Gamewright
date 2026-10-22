@@ -1,4 +1,6 @@
-import { dotnet } from './_framework/dotnet.js';
+// This module is delivered as _content/Gamewright.Browser/main.js, so the .NET runtime, which the app
+// serves from its own _framework folder, is found relative to this module's URL.
+const { dotnet } = (await import(new URL('../../_framework/dotnet.js', import.meta.url).href)) as DotnetModule;
 
 const enum DrawCommandType {
     Path = 1,

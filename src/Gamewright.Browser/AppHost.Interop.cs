@@ -2,10 +2,12 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
 using Gamewright;
 
+namespace Gamewright.Browser;
+
 // The calls into JavaScript: the renderer and the page in main.ts. Input comes the other way
 // through the callback registered with SetClickHandler. The imports are static because the
 // interop generator requires it, but they hold no state.
-sealed partial class AppHost
+public sealed partial class AppHost
 {
     // The byte spans are views into WebAssembly memory that are only valid during the call;
     // the renderer must copy what it keeps.
