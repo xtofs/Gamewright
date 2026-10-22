@@ -16,7 +16,7 @@ Words in capitals (MUST, MAY) are meant as in RFC 2119.
   radii are frame units too, so they scale with everything else.
 - **Order.** An app has two frames. The static frame is drawn first, then the dynamic frame on
   top. Within a frame, commands are drawn in order, later ones over earlier ones.
-- **Colour** is a `uint` packed `R | G<<8 | B<<16 | A<<24` (little endian bytes R, G, B, A),
+- **Color** is a `uint` packed `R | G<<8 | B<<16 | A<<24` (little endian bytes R, G, B, A),
   straight (not premultiplied) alpha, 255 = opaque.
 - **Little endian** is used for every multi-byte value sent between C# and JavaScript.
 
@@ -28,7 +28,7 @@ Words in capitals (MUST, MAY) are meant as in RFC 2119.
 | PathData | `byte[]` | bytes | path opcodes of all path commands, back to back |
 | Geometry | `float[]` | `float32` values | the numbers of all commands, back to back |
 | Paints | `Paint[]` | 16 bytes per paint | how paths are painted |
-| TextStyles | `TextStyle[]` | 8 bytes per style | colour and font of text |
+| TextStyles | `TextStyle[]` | 8 bytes per style | color and font of text |
 | Strings | `string[]` | string array | text to draw |
 
 Commands refer into the other parts by offset and length. A command's ranges MUST lie inside the
@@ -67,7 +67,7 @@ unused and MUST be 0.
 alignment flag, the centre for `AlignCenter` and the right edge for `AlignEnd`. `y` is the
 *vertical middle of the text*, defined as the middle of the em square: the baseline sits
 `(ascent − descent) / 2` below `y`, with ascent and descent taken from the font at the drawn size.
-Text is filled with the style's colour, no outline. A text command with both alignment flags is
+Text is filled with the style's color, no outline. A text command with both alignment flags is
 invalid; renderers MAY treat it as centred.
 
 **Image.** Draws one cell of the app's sprite sheet (the `SpriteSheetLayout` the app declares)
