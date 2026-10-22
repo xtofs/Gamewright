@@ -2,7 +2,7 @@ namespace Gamewright;
 
 using System.Runtime.InteropServices;
 
-/// <summary>How a path is painted. The order matters: a stroke is centred on the edge, so stroking after the fill shows its full width, while stroking first leaves only the outer half visible.</summary>
+/// <summary>How a path is painted (<c>docs/frame-spec.md</c> section 5). The order matters: a stroke is centred on the edge, so stroking after the fill shows its full width, while stroking first leaves only the outer half visible.</summary>
 public enum PaintMode : uint
 {
     /// <summary>Nothing: the value of <c>default(Paint)</c>, which cannot be drawn.</summary>

@@ -150,6 +150,7 @@ public sealed class GameControl : Control
         var geometry = new StreamGeometry();
         using (var g = geometry.Open())
         {
+            g.SetFillRule(FillRule.NonZero); // docs/frame-spec.md section 5
             var figureOpen = false;
             var current = default(Point);
             var subpathStart = default(Point);
@@ -269,8 +270,12 @@ public sealed class GameControl : Control
         else if (HasFlag(command, DrawCommandFlags.AlignEnd))
             x -= (float)text.Width;
 
-        // The text's vertical middle sits at y.
-        context.DrawText(text, new Point(x, y - text.Height / 2));
+        // y is the middle of the em square: the baseline lies (ascent - descent) / 2 below it
+        // (docs/frame-spec.md section 3). FormattedText.Baseline is the baseline's distance from the top.
+        var metrics = typeface.GlyphTypeface.Metrics;
+        var emScale = size / metrics.DesignEmHeight;
+        var baselineBelowY = (Math.Abs(metrics.Ascent) - Math.Abs(metrics.Descent)) * emScale / 2;
+        context.DrawText(text, new Point(x, y + baselineBelowY - text.Baseline));
     }
 
     private void DrawSprite(DrawingContext context, Frame frame, DrawCommand command)

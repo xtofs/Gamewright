@@ -1,5 +1,6 @@
 namespace Gamewright;
 
+/// <summary>Per command flags; which commands use which: <c>docs/frame-spec.md</c> section 3.</summary>
 [Flags]
 public enum DrawCommandFlags : ushort
 {
