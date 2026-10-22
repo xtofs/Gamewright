@@ -64,11 +64,11 @@ unused and MUST be 0.
 | **Image** (3) | unused (0) | none                                   | 4 floats: x, y, width, height            | none                                  | sprite index |
 
 **Text.** Draws `Strings[Data]` in the text style, on one line. `x` is the left edge for no
-alignment flag, the centre for `AlignCenter` and the right edge for `AlignEnd`. `y` is the
+alignment flag, the center for `AlignCenter` and the right edge for `AlignEnd`. `y` is the
 _vertical middle of the text_, defined as the middle of the em square: the baseline sits
 `(ascent − descent) / 2` below `y`, with ascent and descent taken from the font at the drawn size.
 Text is filled with the style's color, no outline. A text command with both alignment flags is
-invalid; renderers MAY treat it as centred.
+invalid; renderers MAY treat it as centered.
 
 **Image.** Draws one cell of the app's sprite sheet (the `SpriteSheetLayout` the app declares)
 into the rectangle, scaled to fit it exactly. The cell for sprite index `i` is column
@@ -92,7 +92,7 @@ A Path command's geometry is the operands of its opcodes in order, with no paddi
 frame where it does not, or where an opcode is unknown or its operands run past the geometry.
 
 Producers always start a path with MoveTo and never produce an empty path. A path with no
-opcodes draws nothing. The behaviour of a path that does not start with MoveTo is undefined.
+opcodes draws nothing. The behavior of a path that does not start with MoveTo is undefined.
 
 **Subpaths and the current point.**
 
@@ -131,9 +131,9 @@ opcodes draws nothing. The behaviour of a path that does not start with MoveTo i
 | StrokeThenFill | 4     | stroke, then fill over it                                          |
 
 - Filling uses the non-zero winding rule, and every open subpath is filled as if closed.
-- A stroke is centred on the path edge and is `StrokeWidth` frame units wide, which is greater
-  than 0. Joins are mitre, caps are butt, the mitre limit is 10, and there is no dash pattern.
-- Because a stroke is centred on the edge, stroking after the fill shows the full width, while
+- A stroke is centered on the path edge and is `StrokeWidth` frame units wide, which is greater
+  than 0. Joins are miter, caps are butt, the miter limit is 10, and there is no dash pattern.
+- Because a stroke is centered on the edge, stroking after the fill shows the full width, while
   stroking first leaves only the outer half visible once the fill covers the inner half.
 
 **Fonts.** `TextStyle.Font` is a `FontIndex`. Body is 16 frame units, regular weight. Heading is

@@ -1,7 +1,7 @@
 namespace Gamewright;
 
 /// <summary>
-/// How a frame of a fixed size is placed in a box of any shape: one uniform scale, centred, so the
+/// How a frame of a fixed size is placed in a box of any shape: one uniform scale, centered, so the
 /// frame never distorts and the spare room is split evenly on one axis. Converts between box
 /// coordinates (pixels of the window or canvas) and frame coordinates.
 /// </summary>

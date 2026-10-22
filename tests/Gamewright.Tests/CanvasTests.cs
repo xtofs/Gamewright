@@ -105,7 +105,7 @@ public class CanvasTests
     }
 
     [Fact]
-    public void CenteredTextIsDrawnAtTheRectangleCentreWithCentreAlignment()
+    public void CenteredTextIsDrawnAtTheRectangleCenterWithCenterAlignment()
     {
         var canvas = new Canvas(100, 100);
         canvas.DrawTextCentered("A", new Rect(10, 20, 30, 40), Red, FontIndex.Heading);

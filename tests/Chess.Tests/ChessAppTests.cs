@@ -5,13 +5,13 @@ namespace Chess.Tests;
 
 public class ChessAppTests
 {
-    // Frame coordinates of a square's centre, from the app's layout (board at 112,104, 52px cells).
-    private static (float X, float Y) Centre(string name) =>
+    // Frame coordinates of a square's center, from the app's layout (board at 112,104, 52px cells).
+    private static (float X, float Y) Center(string name) =>
         (112 + (name[0] - 'a') * 52 + 26, 104 + (8 - (name[1] - '0')) * 52 + 26);
 
     private static Invalidation Click(ChessApp app, string square)
     {
-        var (x, y) = Centre(square);
+        var (x, y) = Center(square);
         return app.Click(x, y);
     }
 
@@ -37,7 +37,7 @@ public class ChessAppTests
     }
 
     [Fact]
-    public void FileAndRankLabelsAreCentredInTheFrameMargin()
+    public void FileAndRankLabelsAreCenteredInTheFrameMargin()
     {
         var frame = new ChessApp().RenderStatic();
 

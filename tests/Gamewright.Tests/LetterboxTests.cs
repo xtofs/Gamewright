@@ -15,7 +15,7 @@ public class LetterboxTests
     }
 
     [Fact]
-    public void WideBoxIsLimitedByHeightAndCentredHorizontally()
+    public void WideBoxIsLimitedByHeightAndCenteredHorizontally()
     {
         var box = Letterbox.Fit(100, 100, 400, 200);
 
@@ -25,7 +25,7 @@ public class LetterboxTests
     }
 
     [Fact]
-    public void TallBoxIsLimitedByWidthAndCentredVertically()
+    public void TallBoxIsLimitedByWidthAndCenteredVertically()
     {
         var box = Letterbox.Fit(100, 100, 200, 400);
 

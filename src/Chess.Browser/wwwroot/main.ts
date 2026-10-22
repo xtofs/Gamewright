@@ -107,7 +107,7 @@ function getRequiredContext(target: HTMLCanvasElement): CanvasRenderingContext2D
     return result;
 }
 
-// Where the frame sits on the canvas, in device pixels: one uniform scale, centred, so the
+// Where the frame sits on the canvas, in device pixels: one uniform scale, centered, so the
 // frame never distorts whatever shape the canvas box has. Updated by resizeCanvas.
 const view = { scale: 1, offsetX: 0, offsetY: 0 };
 
