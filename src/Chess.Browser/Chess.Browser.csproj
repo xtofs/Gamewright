@@ -8,8 +8,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="../gamewright/gamewright.csproj" />
-    <ProjectReference Include="../chess/chess.csproj" />
+    <ProjectReference Include="../Gamewright/Gamewright.csproj" />
+    <ProjectReference Include="../Chess/Chess.csproj" />
   </ItemGroup>
 
   <!-- Compile wwwroot/main.ts to wwwroot/main.js before static web assets are collected. -->

@@ -19,8 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\chess\chess.csproj" />
-    <ProjectReference Include="..\..\src\gamewright\gamewright.csproj" />
+    <ProjectReference Include="..\..\src\Gamewright\Gamewright.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,7 @@ public class MainWindow : Window
         Background = new SolidColorBrush(Color.FromRgb(0x10, 0x15, 0x22));
 
         // The sprite image is the same file the browser host serves, linked in as an Avalonia resource.
-        using var stream = AssetLoader.Open(new Uri($"avares://chess.avalonia/{ChessSprites.Sheet.ImagePath}"));
+        using var stream = AssetLoader.Open(new Uri($"avares://Chess.Avalonia/{ChessSprites.Sheet.ImagePath}"));
         Game = new GameControl(app, new Bitmap(stream));
         Content = Game;
     }

@@ -4,13 +4,13 @@ A `Frame` is the drawing language between an app and a renderer. An app records 
 `Canvas` (or `FrameBuilder`), and each host — the browser renderer in `main.ts`, the Avalonia
 `GameControl`, any future one — reads it and draws. This document says what a frame contains,
 how much data each command and path operation consumes, and what a renderer must do with it.
-The producers are in `src/gamewright` (`FrameBuilder`, `PathBuilder`, `SvgPathParser`).
+The producers are in `src/Gamewright` (`FrameBuilder`, `PathBuilder`, `SvgPathParser`).
 
 Words in capitals (MUST, MAY) are meant as in RFC 2119.
 
 ## 1. Conventions
 
-- **Coordinates** are `float`s in *frame units*. The origin is the top left, x grows right and y
+- **Coordinates** are `float`s in _frame units_. The origin is the top left, x grows right and y
   grows down. Every coordinate and size MUST be finite; producers reject anything else.
 - A renderer scales frame units to its surface (see `Letterbox`). Line widths, font sizes and
   radii are frame units too, so they scale with everything else.
@@ -22,14 +22,14 @@ Words in capitals (MUST, MAY) are meant as in RFC 2119.
 
 ## 2. The parts of a frame
 
-| Part | C# type | Wire form (browser host) | Holds |
-|---|---|---|---|
-| Commands | `DrawCommand[]` | 26 bytes per command | the draw calls, in order |
-| PathData | `byte[]` | bytes | path opcodes of all path commands, back to back |
-| Geometry | `float[]` | `float32` values | the numbers of all commands, back to back |
-| Paints | `Paint[]` | 16 bytes per paint | how paths are painted |
-| TextStyles | `TextStyle[]` | 8 bytes per style | color and font of text |
-| Strings | `string[]` | string array | text to draw |
+| Part       | C# type         | Wire form (browser host) | Holds                                           |
+| ---------- | --------------- | ------------------------ | ----------------------------------------------- |
+| Commands   | `DrawCommand[]` | 26 bytes per command     | the draw calls, in order                        |
+| PathData   | `byte[]`        | bytes                    | path opcodes of all path commands, back to back |
+| Geometry   | `float[]`       | `float32` values         | the numbers of all commands, back to back       |
+| Paints     | `Paint[]`       | 16 bytes per paint       | how paths are painted                           |
+| TextStyles | `TextStyle[]`   | 8 bytes per style        | color and font of text                          |
+| Strings    | `string[]`      | string array             | text to draw                                    |
 
 Commands refer into the other parts by offset and length. A command's ranges MUST lie inside the
 buffers, and styles are shared: many commands may use the same table entry.
@@ -38,16 +38,16 @@ buffers, and styles are shared: many commands may use the same table entry.
 
 `DrawCommand` (26 bytes, packed):
 
-| Offset | Size | Field | Meaning |
-|---|---|---|---|
-| 0 | u16 | Type | 1 Path, 2 Text, 3 Image (sprite) |
-| 2 | u16 | StyleIndex | index into Paints (Path) or TextStyles (Text); 0 and unused for Image |
-| 4 | u16 | Flags | see §3 |
-| 6 | i32 | GeometryOffset | first float of this command in Geometry |
-| 10 | i32 | GeometryLength | number of floats |
-| 14 | i32 | PathDataOffset | first opcode in PathData (Path only, else 0) |
-| 18 | i32 | PathDataLength | number of opcodes (Path only, else 0) |
-| 22 | i32 | Data | Text: index into Strings. Image: sprite index. Path: 0 |
+| Offset | Size | Field          | Meaning                                                               |
+| ------ | ---- | -------------- | --------------------------------------------------------------------- |
+| 0      | u16  | Type           | 1 Path, 2 Text, 3 Image (sprite)                                      |
+| 2      | u16  | StyleIndex     | index into Paints (Path) or TextStyles (Text); 0 and unused for Image |
+| 4      | u16  | Flags          | see §3                                                                |
+| 6      | i32  | GeometryOffset | first float of this command in Geometry                               |
+| 10     | i32  | GeometryLength | number of floats                                                      |
+| 14     | i32  | PathDataOffset | first opcode in PathData (Path only, else 0)                          |
+| 18     | i32  | PathDataLength | number of opcodes (Path only, else 0)                                 |
+| 22     | i32  | Data           | Text: index into Strings. Image: sprite index. Path: 0                |
 
 `Paint` (16 bytes): `u32 FillRgba` @0, `u32 StrokeRgba` @4, `f32 StrokeWidth` @8, `u32 Mode` @12.
 `TextStyle` (8 bytes): `u32 ColorRgba` @0, `i32 Font` @4.
@@ -57,15 +57,15 @@ buffers, and styles are shared: many commands may use the same table entry.
 Flags (`DrawCommandFlags`): `Closed = 1`, `AlignCenter = 2`, `AlignEnd = 4`. Bits not listed are
 unused and MUST be 0.
 
-| Command | StyleIndex | Flags | Geometry | PathData | Data |
-|---|---|---|---|---|---|
-| **Path** (1) | Paints | `Closed` | exactly the operands of its opcodes (§4) | the opcodes, `PathDataLength` of them | 0 |
-| **Text** (2) | TextStyles | `AlignCenter` or `AlignEnd` (not both) | 2 floats: x, y | none | string index |
-| **Image** (3) | unused (0) | none | 4 floats: x, y, width, height | none | sprite index |
+| Command       | StyleIndex | Flags                                  | Geometry                                 | PathData                              | Data         |
+| ------------- | ---------- | -------------------------------------- | ---------------------------------------- | ------------------------------------- | ------------ |
+| **Path** (1)  | Paints     | `Closed`                               | exactly the operands of its opcodes (§4) | the opcodes, `PathDataLength` of them | 0            |
+| **Text** (2)  | TextStyles | `AlignCenter` or `AlignEnd` (not both) | 2 floats: x, y                           | none                                  | string index |
+| **Image** (3) | unused (0) | none                                   | 4 floats: x, y, width, height            | none                                  | sprite index |
 
 **Text.** Draws `Strings[Data]` in the text style, on one line. `x` is the left edge for no
 alignment flag, the centre for `AlignCenter` and the right edge for `AlignEnd`. `y` is the
-*vertical middle of the text*, defined as the middle of the em square: the baseline sits
+_vertical middle of the text_, defined as the middle of the em square: the baseline sits
 `(ascent − descent) / 2` below `y`, with ascent and descent taken from the font at the drawn size.
 Text is filled with the style's color, no outline. A text command with both alignment flags is
 invalid; renderers MAY treat it as centred.
@@ -79,14 +79,14 @@ loaded yet draws nothing and MAY draw again when it has.
 
 A Path command's geometry is the operands of its opcodes in order, with no padding.
 
-| Opcode | Value | Operands (floats) | Count |
-|---|---|---|---|
-| MoveTo | 0 | x, y | 2 |
-| LineTo | 1 | x, y | 2 |
-| QuadTo | 2 | controlX, controlY, x, y | 4 |
-| CubicTo | 3 | control1X, control1Y, control2X, control2Y, x, y | 6 |
-| ArcTo | 4 | radiusX, radiusY, rotation, largeArc, sweep, x, y | 7 |
-| ClosePath | 5 | none | 0 |
+| Opcode    | Value | Operands (floats)                                 | Count |
+| --------- | ----- | ------------------------------------------------- | ----- |
+| MoveTo    | 0     | x, y                                              | 2     |
+| LineTo    | 1     | x, y                                              | 2     |
+| QuadTo    | 2     | controlX, controlY, x, y                          | 4     |
+| CubicTo   | 3     | control1X, control1Y, control2X, control2Y, x, y  | 6     |
+| ArcTo     | 4     | radiusX, radiusY, rotation, largeArc, sweep, x, y | 7     |
+| ClosePath | 5     | none                                              | 0     |
 
 `GeometryLength` MUST equal the sum of the operand counts of the opcodes. A renderer MUST reject a
 frame where it does not, or where an opcode is unknown or its operands run past the geometry.
@@ -95,6 +95,7 @@ Producers always start a path with MoveTo and never produce an empty path. A pat
 opcodes draws nothing. The behaviour of a path that does not start with MoveTo is undefined.
 
 **Subpaths and the current point.**
+
 - MoveTo starts a new subpath at (x, y) and makes it the current point. The previous subpath is
   left open, not closed.
 - LineTo, QuadTo, CubicTo and ArcTo draw from the current point to their end point (x, y), which
@@ -108,6 +109,7 @@ opcodes draws nothing. The behaviour of a path that does not start with MoveTo i
   the last subpath is still open, a renderer closes it.
 
 **ArcTo** is an SVG elliptical arc from the current point to (x, y), as in SVG 1.1 §F.6:
+
 - `rotation` is the x-axis rotation of the ellipse in degrees.
 - `largeArc` and `sweep` are exactly 0 or 1. `sweep` 1 means the arc is drawn in the
   positive-angle direction, which is clockwise on screen because y points down.
@@ -120,13 +122,13 @@ opcodes draws nothing. The behaviour of a path that does not start with MoveTo i
 
 **Paint** (`PaintMode`) says how a path is painted. Fill and stroke use the same path.
 
-| Mode | Value | What is drawn |
-|---|---|---|
-| None | 0 | invalid for a path (the `default` value); a renderer MAY reject it |
-| Fill | 1 | fill with `FillRgba` |
-| Stroke | 2 | stroke with `StrokeRgba` at `StrokeWidth` |
-| FillThenStroke | 3 | fill, then stroke over it |
-| StrokeThenFill | 4 | stroke, then fill over it |
+| Mode           | Value | What is drawn                                                      |
+| -------------- | ----- | ------------------------------------------------------------------ |
+| None           | 0     | invalid for a path (the `default` value); a renderer MAY reject it |
+| Fill           | 1     | fill with `FillRgba`                                               |
+| Stroke         | 2     | stroke with `StrokeRgba` at `StrokeWidth`                          |
+| FillThenStroke | 3     | fill, then stroke over it                                          |
+| StrokeThenFill | 4     | stroke, then fill over it                                          |
 
 - Filling uses the non-zero winding rule, and every open subpath is filled as if closed.
 - A stroke is centred on the path edge and is `StrokeWidth` frame units wide, which is greater
@@ -147,9 +149,11 @@ or an unknown font.
 
 ## 7. Implementations
 
-| Role | Where |
-|---|---|
-| Producers | `src/gamewright`: `Canvas` → `FrameBuilder`, `PathBuilder`, `SvgPathParser` |
-| Browser renderer | `src/browser/wwwroot/main.ts` (reads the buffers sent by `AppHost`) |
-| Avalonia renderer | `src/gamewright.avalonia/GameControl.cs` |
-| Wire layouts pinned by tests | `tests/gamewright.tests/ProtocolTests.cs` |
+| Role                         | Where                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Producers                    | `src/Gamewright`: `Canvas` → `FrameBuilder`, `PathBuilder`, `SvgPathParser` |
+| Browser renderer             | `src/Chess.Browser/wwwroot/main.ts` (reads the buffers sent by `AppHost`)   |
+| Avalonia renderer            | `src/Gamewright.Avalonia/GameControl.cs`                                    |
+| Wire layouts pinned by tests | `tests/Gamewright.Tests/ProtocolTests.cs` s sent by `AppHost`)              |
+| Avalonia renderer            | `src/Gamewright.Avalonia/GameControl.cs`                                    |
+| Wire layouts pinned by tests | `tests/Gamewright.Tests/ProtocolTests.cs`                                   |

@@ -15,12 +15,12 @@
 
   <ItemGroup>
     <!-- The chess sprite sheet, shared with the browser host. -->
-    <AvaloniaResource Include="../browser/wwwroot/sprites.png" Link="sprites.png" />
+    <AvaloniaResource Include="../Chess.Browser/wwwroot/sprites.png" Link="sprites.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../gamewright.avalonia/gamewright.avalonia.csproj" />
-    <ProjectReference Include="../chess/chess.csproj" />
+    <ProjectReference Include="../Gamewright.Avalonia/Gamewright.Avalonia.csproj" />
+    <ProjectReference Include="../Chess/Chess.csproj" />
   </ItemGroup>
 
 </Project>

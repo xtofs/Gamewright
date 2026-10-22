@@ -7,11 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../gamewright/gamewright.csproj" />
+    <ProjectReference Include="../Gamewright/Gamewright.csproj" />
   </ItemGroup>
 
 </Project>

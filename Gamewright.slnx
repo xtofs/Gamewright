@@ -1,13 +1,13 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/browser/browser.csproj" />
-    <Project Path="src/gamewright/gamewright.csproj" />
-    <Project Path="src/chess/chess.csproj" />
-    <Project Path="src/gamewright.avalonia/gamewright.avalonia.csproj" />
-    <Project Path="src/chess.avalonia/chess.avalonia.csproj" />
+    <Project Path="src/Chess.Browser/Chess.Browser.csproj" />
+    <Project Path="src/Gamewright/Gamewright.csproj" />
+    <Project Path="src/Chess/Chess.csproj" />
+    <Project Path="src/Gamewright.Avalonia/Gamewright.Avalonia.csproj" />
+    <Project Path="src/Chess.Avalonia/Chess.Avalonia.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/chess.tests/chess.tests.csproj" />
-    <Project Path="tests/gamewright.tests/gamewright.tests.csproj" />
+    <Project Path="tests/Chess.Tests/Chess.Tests.csproj" />
+    <Project Path="tests/Gamewright.Tests/Gamewright.Tests.csproj" />
   </Folder>
 </Solution>
