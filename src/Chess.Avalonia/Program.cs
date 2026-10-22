@@ -1,10 +1,8 @@
-using Avalonia;
-using Chess.Avalonia;
+using Chess;
+using Gamewright.Avalonia;
 
 internal static class Program
 {
     [STAThread]
-    private static void Main(string[] args) => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-
-    private static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect();
+    private static int Main(string[] args) => GameApplication.Run(new ChessApp(), "Chess", args);
 }

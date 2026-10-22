@@ -9,12 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- The chess sprite sheet, shared with the browser host. -->
+    <!-- The image the chess frames name, shared with the browser host. -->
     <AvaloniaResource Include="../Chess.Browser/wwwroot/sprites.png" Link="sprites.png" />
   </ItemGroup>
 
