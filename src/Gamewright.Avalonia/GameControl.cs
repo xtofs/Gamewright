@@ -5,7 +5,9 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using AvaloniaColor = global::Avalonia.Media.Color;
+using AvaloniaPoint = global::Avalonia.Point;
 using AvaloniaRect = global::Avalonia.Rect;
+using AvaloniaSize = global::Avalonia.Size;
 
 namespace Gamewright.Avalonia;
 
@@ -151,15 +153,15 @@ public sealed class GameControl : Control
             return frame.Geometry[geometryOffset++];
         }
 
-        Point NextPoint() => new(Next(), Next());
+        AvaloniaPoint NextPoint() => new(Next(), Next());
 
         var geometry = new StreamGeometry();
         using (var g = geometry.Open())
         {
             g.SetFillRule(FillRule.NonZero); // docs/frame-spec.md section 5
             var figureOpen = false;
-            var current = default(Point);
-            var subpathStart = default(Point);
+            var current = default(AvaloniaPoint);
+            var subpathStart = default(AvaloniaPoint);
             var lastWasClose = false;
 
             // A drawing operation after a close continues from the subpath start, as in an HTML canvas.
@@ -225,7 +227,7 @@ public sealed class GameControl : Control
                             if (radiusX == 0 || radiusY == 0)
                                 g.LineTo(end, true);
                             else
-                                g.ArcTo(end, new Size(radiusX, radiusY), rotation, largeArc,
+                                g.ArcTo(end, new AvaloniaSize(radiusX, radiusY), rotation, largeArc,
                                     sweep ? SweepDirection.Clockwise : SweepDirection.CounterClockwise, true);
                             current = end;
                             break;
@@ -281,7 +283,7 @@ public sealed class GameControl : Control
         var metrics = typeface.GlyphTypeface.Metrics;
         var emScale = size / metrics.DesignEmHeight;
         var baselineBelowY = (Math.Abs(metrics.Ascent) - Math.Abs(metrics.Descent)) * emScale / 2;
-        context.DrawText(text, new Point(x, y + baselineBelowY - text.Baseline));
+        context.DrawText(text, new AvaloniaPoint(x, y + baselineBelowY - text.Baseline));
     }
 
     private void DrawImage(DrawingContext context, Frame frame, DrawCommand command)
